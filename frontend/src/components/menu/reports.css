@@ -1,0 +1,141 @@
+.reports {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .reports h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+  }
+  
+  .reports h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+    font-weight: 600;
+  }
+  
+  .reports table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+  }
+  
+  .reports th,
+  .reports td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .reports thead {
+    background-color: #f5f7fa;
+  }
+  
+  .reports tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .reports tbody tr:hover {
+    background-color: #eef6ff;
+  }
+  
+  .reports th {
+    color: #555;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+  }
+  
+  .reports td {
+    color: #333;
+    font-size: 0.95rem;
+  }
+
+  /* Print button styling */
+.print-button {
+    background-color: rgb(79, 79, 79, 0.2);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    margin-left: 1rem;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .print-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Print styles */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+  
+    .reports, .reports * {
+      visibility: visible;
+    }
+  
+    .reports {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      padding: 0;
+      box-shadow: none;
+    }
+  
+    .print-button {
+      display: none;
+    }
+  
+    .reports h1, .reports h3 {
+      color: black;
+    }
+  
+    .reports table {
+      border: 1px solid #000;
+    }
+  
+    .reports th, .reports td {
+      border: 1px solid #000;
+    }
+  }
+
+  .button-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  
+  .cancel-button {
+    background-color: rgb(79, 79, 79, 0.2);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .cancel-button:hover {
+    background-color: #a71d2a;
+  }
+  
+  @media print {
+    .cancel-button {
+      display: none;
+    }
+  }
+  

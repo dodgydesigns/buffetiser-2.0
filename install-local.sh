@@ -33,7 +33,7 @@ fi
 
 echo "Installing frontend Node dependencies..."
 cd "$ROOT_DIR/frontend"
-npm install --legacy-peer-deps
+npm install #--legacy-peer-deps
 
 echo "\nLocal dependencies installed successfully."
 echo "Next steps:"

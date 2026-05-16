@@ -1,0 +1,97 @@
+.purchase_modal {
+    background-color: #163599;
+    width: 25rem;
+}
+
+.sale_modal {
+    background-color: #163599;
+    width: 25rem;
+}
+
+.new_investment_modal {
+    background-color: #163599;
+    width: 25rem;
+}
+
+.popup_modal_table_input {
+    float: left;
+}
+
+.popup_modal_input {
+    margin: 0.2rem;
+    padding: 0.2rem;
+    display: block;
+    width: 6.5rem;
+    font-size: 14px;
+    border-radius: 12px;
+    background-color: var(--COLOUR2);
+    color: var(--WHITE);
+    border-style: solid;
+    border-width: 0;
+}
+.popup_modal_input:hover {
+    background: #6fa7cd;
+}
+.cancel {
+    float: right;
+    margin: 3rem 0rem 0rem 0rem;
+    padding: 1px 1px 1px 1px;
+    width: 4.5rem;
+    color: #fff;
+    background: #3282b8;
+    border: none;
+    border-radius: 15px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.cancel:hover {
+    background: #6fa7cd;
+}
+
+.save {
+    float: right;
+    margin: 3rem 0rem 0rem 0rem;
+    padding: 1px 1px 1px 1px;
+    width: 4.5rem;
+    color: #fff;
+    background: #3282b8;
+    border: none;
+    border-radius: 15px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.save:hover {
+    background: #6fa7cd;
+}
+
+.remove_remove {
+    float: right;
+    margin: 3rem 0rem 0rem 0rem;
+    padding: 5px 20px 5px 15px;
+    width: 4.5rem;
+    color: #fff;
+    background: #3282b8;
+    border: none;
+    border-radius: 15px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.remove_remove:hover {
+    background: #6fa7cd;
+}
+
+.remove_cancel {
+    float: right;
+    margin: 3rem 0rem 0rem 0rem;
+    padding: 5px 5px 5px 5px;
+    width: 4.5rem;
+    color: #fff;
+    background: #3282b8;
+    border: none;
+    border-radius: 15px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.remove_cancel:hover {
+    background: #6fa7cd;
+}
