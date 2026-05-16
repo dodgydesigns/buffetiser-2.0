@@ -1,0 +1,21 @@
+
+sudo apt install npm
+./install-local.sh
+
+Next steps:
+  1. Copy infra/.env.example to infra/.env
+  2. Copy backend/.env.example to backend/.env
+  3. Run: docker compose -f infra/docker-compose.dev.yml up --build
+
+docker compose -f infra/docker-compose.dev.yml down
+docker compose -f infra/docker-compose.dev.yml up --build --remove-orphans -d
+
+
+docker compose -f infra/docker-compose.dev.yml up --build
+http://localhost:3000
+
+docker compose up --build
+http://localhost
+
+./install-local.sh
+docker compose -f infra/docker-compose.dev.yml up --build
