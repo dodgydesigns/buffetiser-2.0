@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import InvestmentCharts from "./investment_charts";
 import InvestmentSummary from "./investment_summary_panel";
+import type { Investment, InvestmentModalConstants } from "./types";
 
-function PositiveColour(comparisonValue) {
+function PositiveColour(comparisonValue: number) {
   return comparisonValue > 0 ? "#55ff55" : "#ff4444";
 }
+
+type InvestmentCardProps = Investment & {
+  constants?: InvestmentModalConstants;
+};
 
 /*
 This component holds all the details of an Investment:
@@ -13,7 +18,7 @@ This component holds all the details of an Investment:
  - Price/Volume history chart and
  - Buttons to buy (add), sell (remove) and delete Investments
 */
-function InvestmentCard(investment, constants) {
+function InvestmentCard({ constants, ...investment }: InvestmentCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -29,7 +34,7 @@ function InvestmentCard(investment, constants) {
                   <tr>
                     <td width="40%"></td>
                     <td className="header_header" width="5%">
-                      Last Price
+                      Last
                     </td>
                     <td className="header_header" width="3%">
                       +/-

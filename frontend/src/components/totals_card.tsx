@@ -3,14 +3,27 @@ import axios from "axios";
 import TotalsChart from "./totals_chart";
 import TotalsHeader from "./totals_header";
 
+type TotalPortfolioValues = {
+  total_cost: number;
+  total_value: number;
+  total_profit: number;
+  total_profit_percentage: number;
+};
+
+type PortfolioHistoryPoint = {
+  date: string;
+  total: number;
+};
+
 /*
 This hold the details showing overall changes of the portfolio over time. This 
 includes a chart showing date vs (purchases and sales) and combined value of the 
 whole portfolio.
 */
 export default function TotalsCard() {
-  const [totalPortfolioValues, setTotalPortfolioValues] = useState([]);
-  const [portfolioHistory, setPortfolioHistory] = useState([]);
+  const [totalPortfolioValues, setTotalPortfolioValues] =
+    useState<TotalPortfolioValues | null>(null);
+  const [portfolioHistory, setPortfolioHistory] = useState<PortfolioHistoryPoint[]>([]);
 
   useEffect(() => {
     axios

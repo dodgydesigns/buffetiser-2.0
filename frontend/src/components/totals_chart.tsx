@@ -1,4 +1,3 @@
-import { PureComponent } from "react";
 import {
   LineChart,
   Line,
@@ -11,12 +10,30 @@ import {
 } from "recharts";
 import "../index.css";
 
-const CustomTooltip = ({ active, payload }) => {
+type PortfolioHistoryPoint = {
+  date: string;
+  total: number;
+};
+
+type TooltipPayload = {
+  value?: number;
+};
+
+type CustomTooltipProps = {
+  active?: boolean;
+  payload?: TooltipPayload[];
+};
+
+type TotalsChartProps = {
+  portfolioHistory: PortfolioHistoryPoint[];
+};
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">
         <p className="tooltip-desc" style={{ color: "white" }}>
-          ${payload[0].value.toFixed(2)}
+          ${(payload[0]?.value ?? 0).toFixed(2)}
         </p>
       </div>
     );
@@ -24,12 +41,12 @@ const CustomTooltip = ({ active, payload }) => {
 
   return null;
 };
-export default class InvestmentCharts extends PureComponent {
-  render() {
-    return (
-      <ResponsiveContainer width="98%" height={300}>
+
+export default function TotalsChart({ portfolioHistory }: TotalsChartProps) {
+  return (
+    <ResponsiveContainer width="98%" height={300}>
         <LineChart
-          data={this.props.portfolioHistory}
+          data={portfolioHistory}
           margin={{
             top: 5,
             right: 30,
@@ -63,8 +80,7 @@ export default class InvestmentCharts extends PureComponent {
             stroke="#f5e642"
             activeDot={{ r: 8 }}
           />
-        </LineChart>
-      </ResponsiveContainer>
-    );
-  }
+      </LineChart>
+    </ResponsiveContainer>
+  );
 }

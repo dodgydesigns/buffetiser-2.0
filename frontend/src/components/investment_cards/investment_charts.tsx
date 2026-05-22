@@ -1,4 +1,3 @@
-import React, { PureComponent } from "react";
 import {
   Line,
   Area,
@@ -11,8 +10,19 @@ import {
   ComposedChart,
 } from "recharts";
 import "../../index.css";
+import type { InvestmentHistoryPoint } from "./types";
 
-const CustomTooltip = ({ active, payload }) => {
+type TooltipPayload = {
+  color?: string;
+  value?: number | string;
+};
+
+type CustomTooltipProps = {
+  active?: boolean;
+  payload?: TooltipPayload[];
+};
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">
@@ -32,11 +42,14 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-export default class InvestmentCharts extends PureComponent {
-  render() {
-    return (
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={this.props.investment_history}>
+type InvestmentChartsProps = {
+  investment_history: InvestmentHistoryPoint[];
+};
+
+export default function InvestmentCharts({ investment_history }: InvestmentChartsProps) {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={investment_history}>
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="#0f4c75"
@@ -91,8 +104,7 @@ export default class InvestmentCharts extends PureComponent {
             stroke="#f5e642"
             activeDot={{ r: 8 }}
           />
-        </ComposedChart>
-      </ResponsiveContainer>
-    );
-  }
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
 }

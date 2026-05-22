@@ -1,14 +1,19 @@
-import { useState, React } from "react";
+import { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./popup_styles.css";
 
-function NewReinvestmentModal({ props, endpoint, onClose }) {
-  const [symbol, setSymbol] = useState(props?.value ?? "");
-  const [date, setDate] = useState(props?.value ?? "");
-  const [units, setUnits] = useState(props?.value ?? "");
+type NewReinvestmentModalProps = {
+  endpoint: string;
+  onClose: () => void;
+};
 
-  const HandleClose = () => {
+function NewReinvestmentModal({ endpoint, onClose }: NewReinvestmentModalProps) {
+  const [symbol, setSymbol] = useState("");
+  const [date, setDate] = useState<Date | null>(new Date());
+  const [units, setUnits] = useState("");
+
+  const handleClose = () => {
     onClose();
   };
 
@@ -50,11 +55,12 @@ function NewReinvestmentModal({ props, endpoint, onClose }) {
             </tr>
           </tbody>
         </table>
-          <div
+          <button
+            type="button"
             className="save"
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose();
 
               const result = {
                 symbol: symbol,
@@ -73,17 +79,18 @@ function NewReinvestmentModal({ props, endpoint, onClose }) {
             }}
           >
             Save
-          </div>
-          <div
+          </button>
+          <button
+            type="button"
             className="cancel"
             style={{ marginRight: "3rem" }}
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose();
             }}
           >
             Cancel
-        </div>
+        </button>
       </div>
     </div>
   );

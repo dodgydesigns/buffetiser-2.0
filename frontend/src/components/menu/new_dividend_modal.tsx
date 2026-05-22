@@ -1,22 +1,29 @@
-import { useState, React } from "react";
+import { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import "./popup_styles.css";
 
-function NewInvestmentModal({ props, endpoint, onClose }) {
-  const [symbol, setSymbol] = useState(props?.value ?? "");
-  const [name, setName] = useState(props?.value ?? "");
+type NewDividendModalProps = {
+  endpoint: string;
+  onClose: () => void;
+};
 
-  const HandleClose = () => {
+
+function NewDividendModal({ endpoint, onClose }: NewDividendModalProps) {
+  const [symbol, setSymbol] = useState("");
+  const [date, setDate] = useState<Date | null>(new Date());
+  const [amount, setAmount] = useState("");
+
+  const handleClose = () => {
     onClose();
   };
 
   return (
     <div className="popup_overlay">
       <div className="popup_modal new_investment_modal">
-        <h2 className="popup_heading">New Investment Purchase</h2>
+        <h2 className="popup_heading">New Dividend Payment</h2>
         <p>
-          If you need to add a new investment to your portfolio, use this
-          dialog. It will incorporate a new investment and purchase (of 0) and
-          add to the investment list.
+          Record dividends paid for shares that are not re-invested.
         </p>
         <table className="popup_modal_table">
           <tbody>
@@ -31,26 +38,34 @@ function NewInvestmentModal({ props, endpoint, onClose }) {
               </td>
             </tr>
             <tr>
-              <td className="popup_modal_table_label">Name</td>
+              <td className="popup_modal_table_label">Date</td>
+              <td className="popup_modal_table_input">
+              <DatePicker selected={date} onChange={(date) => setDate(date)} />
+              </td>
+            </tr>
+            <tr>
+              <td className="popup_modal_table_label">Amount</td>
               <td className="popup_modal_table_input">
                 <input
                   className="popup_modal_table_text"
-                  id={name}
-                  onChange={(e) => setName(e.target.value)}
+                  id={symbol}
+                  onChange={(e) => setAmount(e.target.value)}
                 />
               </td>
             </tr>
           </tbody>
         </table>
-          <div
+          <button
+            type="button"
             className="save"
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose();
 
               const result = {
                 symbol: symbol,
-                name: name,
+                date: date,
+                amount: amount,
               };
               fetch(endpoint, {
                 method: "POST",
@@ -64,20 +79,21 @@ function NewInvestmentModal({ props, endpoint, onClose }) {
             }}
           >
             Save
-          </div>
-          <div
+          </button>
+          <button
+            type="button"
             className="cancel"
             style={{ marginRight: "3rem" }}
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose();
             }}
           >
             Cancel
-        </div>
+        </button>
       </div>
     </div>
   );
 }
 
-export default NewInvestmentModal;
+export default NewDividendModal;

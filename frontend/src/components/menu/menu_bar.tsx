@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import NewInvestmentModal from "./new_investment_modal.jsx";
-import NewReinvestmentModal from "./new_reinvestment_modal.jsx";
-import NewDividendModal from "./new_dividend_modal.jsx";
-import ConfigModal from "./config_modal.jsx";
+import NewInvestmentModal from "./new_investment_modal";
+import NewReinvestmentModal from "./new_reinvestment_modal";
+import NewDividendModal from "./new_dividend_modal";
+import ConfigModal from "./config_modal";
 import axios from "axios";
 import "../../index.css";
 
 const baseURL = "/api/v1";
 
-function MenuBar(constants) {
+function MenuBar() {
   const [showNewInvestment, setShowNewInvestment] = useState(false);
   const [showNewReinvestment, setShowNewReinvestment] = useState(false);
   const [showNewDividend, setShowNewDividend] = useState(false);
@@ -46,7 +46,8 @@ function MenuBar(constants) {
 
   return (
     <div className="header">
-      <span
+      <button
+        type="button"
         className="header_bar_div"
         onClick={() => {
           setShowConfig(true);
@@ -54,14 +55,14 @@ function MenuBar(constants) {
       >
         {showConfig && (
           <ConfigModal
-            props={constants}
             baseURL={baseURL}
             onClose={() => handleConfigClose()}
           ></ConfigModal>
         )}
         Admin
-      </span>
-      <span
+      </button>
+      <button
+        type="button"
         className="header_bar_div"
         onClick={() => {
           handleNewDropdownOpen();
@@ -82,44 +83,44 @@ function MenuBar(constants) {
         )}
         {showNewInvestment && (
           <NewInvestmentModal
-            props={constants}
             endpoint={baseURL + "/new_investment/"}
             onClose={() => handleNewInvestmentClose()}
           ></NewInvestmentModal>
         )}
         {showNewReinvestment && (
           <NewReinvestmentModal
-            props={constants}
             endpoint={baseURL + "/add_reinvestment/"}
             onClose={() => handleNewReinvestmentClose()}
           ></NewReinvestmentModal>
         )}
         {showNewDividend && (
           <NewDividendModal
-            props={constants}
             endpoint={baseURL + "/add_dividend_payment/"}
             onClose={() => handleNewDividendClose()}
           ></NewDividendModal>
         )}
         Add New
-      </span>
-      <span
+      </button>
+      <button
+        type="button"
         className="header_bar_div"
         onClick={() => {
           navigate("/reports/");
         }}
       >
         Reports
-      </span>
-      <span
+      </button>
+      <button
+        type="button"
         className="header_bar_div"
         onClick={() => {
           axios.post(baseURL + "/help/");
         }}
       >
         Help
-      </span>
-      <span
+      </button>
+      <button
+        type="button"
         className="header_bar_div"
         onClick={() => {
           const refreshToken = localStorage.getItem("refresh_token");
@@ -149,7 +150,7 @@ function MenuBar(constants) {
         }}
       >
         Logout
-      </span>
+      </button>
     </div>
   );
 }

@@ -1,4 +1,4 @@
 from sqlmodel import SQLModel
-from app.models.user import User
+import app.models  # noqa: F401
 
 SQLModelBase = SQLModel

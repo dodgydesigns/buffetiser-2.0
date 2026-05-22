@@ -1,20 +1,22 @@
-import { useState, React } from "react";
-import DatePicker from "react-datepicker";
-import { registerLocale } from "react-datepicker";
-import enAU from 'date-fns/locale/en-AU';
+import { useState } from "react";
+import type { Investment } from "./types";
 
 import "../menu/popup_styles.css";
 import "react-datepicker/dist/react-datepicker.css";
 
-registerLocale('enAU', enAU);
+type RemoveModalProps = {
+  investment: Pick<Investment, "symbol" | "name">;
+  endpoint: string;
+  onClose: (saved: boolean) => void;
+};
 
-function RemoveModal({ investment, _, endpoint, onClose }) {
+function RemoveModal({ investment, endpoint, onClose }: RemoveModalProps) {
   const [symbol] = useState(investment.symbol);
   const [name] = useState(investment.name);
   const endpoint_string = endpoint;
 
-  const HandleClose = () => {
-    onClose(false);
+  const handleClose = (saved: boolean) => {
+    onClose(saved);
   };
 
   return (
@@ -31,11 +33,12 @@ function RemoveModal({ investment, _, endpoint, onClose }) {
         You will have to modify the Investment in the DB to show it again.
         </p>
         <div>
-          <div
+          <button
+            type="button"
             className="remove_remove"
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose(true);
               const result = {
                 symbol: symbol,
               };
@@ -51,17 +54,18 @@ function RemoveModal({ investment, _, endpoint, onClose }) {
             }}
           >
           REMOVE
-        </div>
-        <div
+        </button>
+        <button
+            type="button"
             className="remove_cancel"
             style={{ marginRight: "3rem" }}
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose(false);
             }}
           >
             Cancel
-        </div>
+        </button>
       </div>
     </div>
   </div>);

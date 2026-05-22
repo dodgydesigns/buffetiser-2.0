@@ -1,12 +1,16 @@
-import { useState, useEffect, React } from "react";
+import { useState, useEffect } from "react";
 import "./popup_styles.css";
 
-function ConfigModal({ props, baseURL, onClose }) {
-  const [cronTime, setCronTime] = useState();
+type ConfigModalProps = {
+  baseURL: string;
+  onClose: () => void;
+};
+
+function ConfigModal({ baseURL, onClose }: ConfigModalProps) {
+  const [cronTime, setCronTime] = useState("");
   const [updateAllSuccess, setUpdateAllSuccess] = useState(false);
-  const [restoreFilePath, setRestoreFilePath] = useState();
   /* Close the dialog window */
-  const HandleClose = () => {
+  const handleClose = () => {
     onClose();
   };
 
@@ -17,10 +21,10 @@ function ConfigModal({ props, baseURL, onClose }) {
     return () => { ignore = true; }
   }, [baseURL]);
 
-  async function getData(baseURL) {
+  async function getData(baseURL: string) {
     const url = baseURL + "/cron_time/";
       const response = await fetch(url);
-      let json = await response.json();
+      const json = await response.json();
       setCronTime(json["cron_time"]);
   }
 
@@ -55,7 +59,7 @@ function ConfigModal({ props, baseURL, onClose }) {
             <tr>
               <td className="popup_modal_table_label">Restore DB</td>
               <td className="popup_modal_table_input">
-              <label for="img"  class="popup_modal_input">Choose File</label>
+              <label htmlFor="img" className="popup_modal_input">Choose File</label>
               <input 
                   type="file" 
                   className="popup_modal_button"
@@ -107,7 +111,7 @@ function ConfigModal({ props, baseURL, onClose }) {
                         Accept: "application/json",
                         "Content-Type": "application/json",
                       },
-                    }).then(function (a) {
+                    }).then(function () {
                       setUpdateAllSuccess(true)
                   })
                   }}
@@ -152,16 +156,17 @@ function ConfigModal({ props, baseURL, onClose }) {
             </tr>
           </tbody>
         </table>
-          <div
+          <button
+            type="button"
             className="cancel"
             style={{ marginRight: "3rem" }}
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose();
             }}
           >
             Close
-        </div>
+        </button>
       </div>
     </div>
   );

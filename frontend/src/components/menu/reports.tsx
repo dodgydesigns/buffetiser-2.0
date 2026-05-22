@@ -4,31 +4,52 @@ import "./reports.css";
 
 const baseURL = "/api/v1";
 
-const InvestmentTransactions = () => {
-  const [investments, setInvestments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [sortColumn, setSortColumn] = useState(null); // Column to sort by
-  const [sortOrder, setSortOrder] = useState("asc"); // "asc" or "desc"
+type Transaction = {
+  date?: string;
+  reinvestment_date?: string;
+  payment_date?: string;
+  type: string;
+  units?: number;
+  fee?: number;
+  price_per_unit?: number;
+  value?: number;
+};
 
-  function getDate(transaction) {
+type ReportInvestment = {
+  symbol: string;
+  name: string;
+  transactions: Transaction[];
+};
+
+type SortColumn = "date" | "type" | "units" | "price" | "fee";
+type SortOrder = "asc" | "desc";
+
+const InvestmentTransactions = () => {
+  const [investments, setInvestments] = useState<ReportInvestment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+
+  function getDate(transaction: Transaction) {
     const dateStr = transaction.date || transaction.reinvestment_date || transaction.payment_date;
+    if (!dateStr) return "";
     const [day, month, year] = dateStr.split('/');
     return `${year}/${month}/${day}`;
   }
 
-  function getTransactionType(transaction) {
+  function getTransactionType(transaction: Transaction) {
     return String(transaction.type).charAt(0).toUpperCase() + String(transaction.type).slice(1);
   }
 
-  function getUnits(transaction) {
+  function getUnits(transaction: Transaction) {
     return transaction.units !== undefined ? transaction.units : "-";
   }
 
-  function getFee(transaction) {
+  function getFee(transaction: Transaction) {
     return transaction.fee !== undefined ? transaction.fee : "-";
   }
 
-  function getPrice(transaction) {
+  function getPrice(transaction: Transaction) {
     if (transaction.price_per_unit) {
       return transaction.price_per_unit.toFixed(2);
     } else if (transaction.value) {
@@ -37,12 +58,12 @@ const InvestmentTransactions = () => {
     return "-";
   }
 
-  const sortTransactions = (transactions) => {
+  const sortTransactions = (transactions: Transaction[]) => {
     if (!sortColumn) return transactions;
 
-    return transactions.sort((a, b) => {
-      let valA = null;
-      let valB = null;
+    return [...transactions].sort((a, b) => {
+      let valA: string | number = "";
+      let valB: string | number = "";
 
       switch (sortColumn) {
         case "date":
@@ -75,7 +96,7 @@ const InvestmentTransactions = () => {
     });
   };
 
-  const handleSort = (column) => {
+  const handleSort = (column: SortColumn) => {
     setSortOrder(prevOrder => (sortColumn === column && prevOrder === "asc" ? "desc" : "asc"));
     setSortColumn(column);
   };
@@ -84,7 +105,7 @@ const InvestmentTransactions = () => {
     axios.get(baseURL + "/reports/")
       .then((response) => {
         const data = response.data;
-        const values = Object.values(data);
+        const values = Object.values(data) as ReportInvestment[];
         setInvestments(values);
         setLoading(false);
       })

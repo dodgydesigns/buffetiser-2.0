@@ -2,13 +2,24 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from backend.app.db.base import SQLModelBase
-from backend.app.core.config import settings
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / 'backend' / '.env')
+BACKEND = ROOT / "backend"
+load_dotenv(BACKEND / ".env")
 
-engine = create_engine(settings.database_url, echo=settings.db_echo)
+import sys
+
+sys.path.insert(0, str(BACKEND))
+
+from app.db.base import SQLModelBase  # noqa: E402
+
+database_url = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg://buffetiser:password@localhost:5433/BUFFETISER_DB",
+)
+db_echo = os.getenv("DB_ECHO", "false").lower() == "true"
+
+engine = create_engine(database_url, echo=db_echo)
 SQLModelBase.metadata.create_all(bind=engine)
 
 print('Created database tables')

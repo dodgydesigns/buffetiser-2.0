@@ -8,8 +8,5 @@ export default defineConfig({
       '/api': 'http://backend:8000'
     }
   },
-  esbuild: {
-    loader: 'jsx'
-  },
   plugins: [react()]
 })

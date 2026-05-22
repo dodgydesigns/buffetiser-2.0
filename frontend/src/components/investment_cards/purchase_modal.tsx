@@ -1,34 +1,55 @@
-import { useState, React } from "react";
+import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import { registerLocale } from "react-datepicker";
 import enAU from 'date-fns/locale/en-AU';
 
 import "../menu/popup_styles.css";
 import "react-datepicker/dist/react-datepicker.css";
+import {
+  getConstantOptionValue,
+  normaliseModalConstants,
+  type Investment,
+  type InvestmentModalConstants,
+} from "./types";
 
 registerLocale('enAU', enAU);
 
-function SaleModal({ investment, constants, endpoint, onClose }) {
+type PurchaseModalProps = {
+  className?: string;
+  investment: Pick<Investment, "symbol" | "name">;
+  constants?: InvestmentModalConstants;
+  endpoint: string;
+  onClose: (saved: boolean) => void;
+};
+
+function PurchaseModal({ investment, constants, endpoint, onClose }: PurchaseModalProps) {
+  const modalConstants = normaliseModalConstants(constants);
   const [symbol] = useState(investment.symbol);
   const [name] = useState(investment.name);
-  const [currency, setCurrency] = useState();
-  const [exchange, setExchange] = useState();
-  const [platform, setPlatform] = useState();
-  const [units, setUnits] = useState();
-  const [pricePerUnit, setPricePerUnit] = useState();
-  const [fee, setFee] = useState();
+  const [currency, setCurrency] = useState("");
+  const [exchange, setExchange] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [units, setUnits] = useState(0);
+  const [pricePerUnit, setPricePerUnit] = useState(0);
+  const [fee, setFee] = useState(0);
   const [date, setDate] = useState(new Date());
   const endpoint_string = endpoint;
 
-  const HandleClose = () => {
-    onClose();
+  const handleClose = (button: "ok" | "cancel") => {
+    if (button === "ok") {
+      onClose(true);
+      return;
+    }
+    onClose(false);
   };
 
   return (
     <div className="popup_overlay">
-      <div className="popup_modal sale_modal">
-        <h2 className="popup_heading">New Sale</h2>
+      <div className="popup_modal purchase_modal">
+        <h2 className="popup_heading">New Purchase</h2>
         <p>
+          If you have purchased shares in an existing investment, use this dialog
+          to add the details of the purchase to your portfolio.
         </p>
         <table className="popup_modal_table">
           <tbody>
@@ -53,12 +74,14 @@ function SaleModal({ investment, constants, endpoint, onClose }) {
               <td className="popup_modal_table_input">
                 <select
                   className="popup_modal_table_text"
+                  value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                 >
-                  <option>Select...</option>
-                  {constants["currency"].map((x) => (
-                    <option key={x[0]}>{x[0]}</option>
-                  ))}
+                  <option value="">Select...</option>
+                  {modalConstants.currency.map((x) => {
+                    const value = getConstantOptionValue(x);
+                    return <option key={value} value={value}>{value}</option>;
+                  })}
                 </select>
               </td>
             </tr>
@@ -67,13 +90,14 @@ function SaleModal({ investment, constants, endpoint, onClose }) {
               <td className="popup_modal_table_input">
                 <select
                   className="popup_modal_table_text"
-                  defaultValue={0}
+                  value={exchange}
                   onChange={(e) => setExchange(e.target.value)}
                 >
-                  <option>Select...</option>
-                  {constants["exchange"].map((x) => (
-                    <option key={x[0]}>{x[0]}</option>
-                  ))}
+                  <option value="">Select...</option>
+                  {modalConstants.exchange.map((x) => {
+                    const value = getConstantOptionValue(x);
+                    return <option key={value} value={value}>{value}</option>;
+                  })}
                 </select>
               </td>
             </tr>
@@ -82,13 +106,14 @@ function SaleModal({ investment, constants, endpoint, onClose }) {
               <td className="popup_modal_table_input">
                 <select
                   className="popup_modal_table_text"
-                  defaultValue={0}
+                  value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
                 >
-                  <option>Select...</option>
-                  {constants["platform"].map((x) => (
-                    <option key={x[0]}>{x[0]}</option>
-                  ))}
+                  <option value="">Select...</option>
+                  {modalConstants.platform.map((x) => {
+                    const value = getConstantOptionValue(x);
+                    return <option key={value} value={value}>{value}</option>;
+                  })}
                 </select>
               </td>
             </tr>
@@ -98,7 +123,7 @@ function SaleModal({ investment, constants, endpoint, onClose }) {
                 <input
                   className="popup_modal_table_text"
                   type="number"
-                  onChange={(e) => setUnits(e.target.value)}
+                  onChange={(e) => setUnits(parseFloat(e.target.value) || 0)}
                 ></input>
               </td>
             </tr>
@@ -109,7 +134,7 @@ function SaleModal({ investment, constants, endpoint, onClose }) {
                 <input
                   className="popup_modal_table_text"
                   type="number"
-                  onChange={(e) => setPricePerUnit(e.target.value)}
+                  onChange={(e) => setPricePerUnit(parseFloat(e.target.value) || 0)}
                 ></input>
               </td>
             </tr>
@@ -119,27 +144,30 @@ function SaleModal({ investment, constants, endpoint, onClose }) {
                 <input
                   className="popup_modal_table_text"
                   type="number"
-                  onChange={(e) => setFee(e.target.value)}
+                  onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
                 ></input>
               </td>
             </tr>
             <tr>
               <td className="popup_modal_table_label">Date</td>
               <td className="popup_modal_table_input">
-                <DatePicker locale="enAU" 
-                            dateFormat="dd/MM/yyyy" 
-                            selected={date} 
-                            onChange={(e) => setDate(e)} />
+                <DatePicker
+                  locale="enAU"
+                  dateFormat="dd/MM/yyyy"
+                  selected={date}
+                  onChange={(d: Date | null) => d && setDate(d)}
+                />
               </td>
             </tr>
           </tbody>
         </table>
         <div>
-          <div
+          <button
+            type="button"
             className="save"
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose("ok");
 
               const result = {
                 symbol: symbol,
@@ -159,23 +187,25 @@ function SaleModal({ investment, constants, endpoint, onClose }) {
                 },
                 body: JSON.stringify(result),
               });
+              console.log(JSON.stringify(result));
             }}
           >
-          Save
-        </div>
-        <div
+            Save
+          </button>
+          <button
+            type="button"
             className="cancel"
             style={{ marginRight: "3rem" }}
             onClick={(e) => {
               e.stopPropagation();
-              HandleClose();
+              handleClose("cancel");
             }}
           >
             Cancel
-        </div>
+          </button>
       </div>
     </div>
   </div>);
 }
 
-export default SaleModal;
+export default PurchaseModal;

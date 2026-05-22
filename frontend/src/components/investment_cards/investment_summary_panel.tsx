@@ -9,15 +9,22 @@ specific information about an Investment:
 
 Does not include profit/loss due to sales. (maybe it should???)
 */
-import { React, useState } from "react";
+import { useState } from "react";
 import "../../index.css";
-import PurchaseModal from "./purchase_modal.jsx";
-import SaleModal from "./sale_modal.jsx";
-import RemoveModal from "./remove_modal.jsx";
+import type { Investment, InvestmentModalConstants } from "./types";
+import PurchaseModal from "./purchase_modal";
+import SaleModal from "./sale_modal";
+import RemoveModal from "./remove_modal";
 
 const baseURL = "/api/v1";
 
-export default function InvestmentSummary(props) {
+
+type InvestmentSummaryProps = {
+  investment: Investment;
+  constants?: InvestmentModalConstants;
+};
+
+export default function InvestmentSummary(props: InvestmentSummaryProps) {
   
   const investment = props.investment;
   const constants = props.constants
@@ -26,13 +33,13 @@ export default function InvestmentSummary(props) {
   const [showSellInvestment, setShowSellInvestment] = useState(false);
   const [showRemoveInvestment, setShowRemoveInvestment] = useState(false);
   
-  const handleBuyInvestmentClose = (isOpen) => {
+  const handleBuyInvestmentClose = (isOpen: boolean) => {
     setShowBuyInvestment(isOpen);
   };
-  const handleSellInvestmentClose = (isOpen) => {
+  const handleSellInvestmentClose = (isOpen: boolean) => {
     setShowSellInvestment(isOpen);
   };
-  const handleRemoveInvestmentClose = (isOpen) => {
+  const handleRemoveInvestmentClose = (isOpen: boolean) => {
     setShowRemoveInvestment(isOpen);
   };
 
@@ -79,7 +86,7 @@ export default function InvestmentSummary(props) {
           investment={investment} 
           constants={constants}
           endpoint={baseURL + "/purchase/"}
-          onClose={() => handleBuyInvestmentClose()}
+          onClose={() => handleBuyInvestmentClose(false)}
         ></PurchaseModal>
       )}
         Buy</button>
@@ -91,7 +98,7 @@ export default function InvestmentSummary(props) {
           investment={investment} 
           constants={constants}
           endpoint={baseURL + "/sale/"}
-          onClose={() => handleSellInvestmentClose()}
+          onClose={() => handleSellInvestmentClose(false)}
         ></SaleModal>
       )}
         Sell</button>
@@ -103,7 +110,7 @@ export default function InvestmentSummary(props) {
           <RemoveModal
           investment={investment} 
           endpoint={baseURL + "/remove/"}
-          onClose={() => handleRemoveInvestmentClose()}
+          onClose={() => handleRemoveInvestmentClose(false)}
           ></RemoveModal>
         )}
         Remove</button>

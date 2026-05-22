@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import axios from "axios";
 
 import MenuBar from "./menu/menu_bar";
 import InvestmentCard from "./investment_cards/investment_card";
 import TotalsCard from "./totals_card";
+import type { Investment, InvestmentModalConstants } from "./investment_cards/types";
 
 import "../index.css";
 
-function InvestmentCards(props) {
+
+type InvestmentCardsProps = {
+  allInvestments: Investment[];
+  constants: InvestmentModalConstants;
+};
+
+function InvestmentCards(props: InvestmentCardsProps) {
   const { allInvestments, constants } = props;
 
   return (
@@ -27,22 +33,17 @@ function InvestmentCards(props) {
   );
 }
 
-InvestmentCards.propTypes = {
-  allInvestments: PropTypes.array.isRequired,
-  constants: PropTypes.array.isRequired,
-};
-
 /*
 Pull all of the required information once and feed it to
 the child components.
 */
 export default function Dashboard() {
-  const [allInvestments, setAllInvestments] = useState([]);
-  const [constants, setConstants] = useState([]);
+  const [allInvestments, setAllInvestments] = useState<Investment[]>([]);
+  const [constants, setConstants] = useState<InvestmentModalConstants>({});
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/all")
+      .get("api/v1/all")
       .then((response) => {
         console.log(response.data.all_investment_data);
         setAllInvestments(response.data.all_investment_data);
@@ -52,7 +53,7 @@ export default function Dashboard() {
       });
 
     axios
-      .get("http://localhost:8000/constants")
+      .get("api/v1/constants")
       .then((response) => {
         setConstants(response.data);
       })
@@ -61,13 +62,13 @@ export default function Dashboard() {
       });
   }, []);
 
-  if (allInvestments.length === 0 || constants.length === 0) {
+  if (allInvestments.length === 0) {
     return <div>Loading!</div>;
   }
 
   return (
     <>
-      <MenuBar constants={constants} />
+      <MenuBar />
 
       <div className="content">
         <InvestmentCards

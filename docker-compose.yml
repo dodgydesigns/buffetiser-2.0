@@ -1,29 +1,41 @@
 services:
   db:
-    image: postgres:16
-    restart: unless-stopped
-    env_file:
-      - .env
-    volumes:
-      - db_data:/var/lib/postgresql/data
+    image: postgres:16-alpine
+    container_name: buffetiser_db
+    restart: always
+    environment:
+      POSTGRES_USER: buffetiser
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: BUFFETISER_DB
+    ports:
+      - "5433:5432"
     networks:
       - buffetiser
+
+    # volumes:
+    # - db_data:/var/lib/postgresql/data
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: buffetiser_backend
     env_file:
       - ./backend/.env
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
     depends_on:
       - db
     networks:
       - buffetiser
 
-  nginx:
+  frontend:
     build:
       context: .
       dockerfile: infra/nginx/Dockerfile
+    container_name: buffetiser_frontend
     ports:
       - "80:80"
     depends_on:
