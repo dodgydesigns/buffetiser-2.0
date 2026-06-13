@@ -1469,10 +1469,6 @@ app = FastAPI(title="Buffetiser API")
 
 api_v1 = APIRouter(prefix="/api/v1")
 
-@app.get("/health")
-def root_health():
-    return {"status": "ok"}
-
 @api_v1.get("/health")
 def health():
     return {"status": "ok"}

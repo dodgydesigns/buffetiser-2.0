@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 import MenuBar from "./menu/menu_bar";
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <MenuBar />
+      <MenuBar constants={constants}/>
 
       <div className="content">
         <InvestmentCards

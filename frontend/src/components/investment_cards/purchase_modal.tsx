@@ -5,6 +5,17 @@ import enAU from 'date-fns/locale/en-AU';
 
 import "../menu/popup_styles.css";
 import "react-datepicker/dist/react-datepicker.css";
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
 import {
   getConstantOptionValue,
   normaliseModalConstants,
@@ -44,168 +55,137 @@ function PurchaseModal({ investment, constants, endpoint, onClose }: PurchaseMod
   };
 
   return (
-    <div className="popup_overlay">
-      <div className="popup_modal purchase_modal">
-        <h2 className="popup_heading">New Purchase</h2>
-        <p>
-          If you have purchased shares in an existing investment, use this dialog
-          to add the details of the purchase to your portfolio.
-        </p>
-        <table className="popup_modal_table">
-          <tbody>
-            <tr>
-              <td className="popup_modal_table_label">Symbol</td>
-              <td className="popup_modal_table_value_label">
-                <label
-                  className="popup_modal_table_text"
-                  id={symbol}
-                >{symbol}</label>
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Name</td>
-              <td className="popup_modal_table_value_label">
-                <label
-                >{name}</label>
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Currency</td>
-              <td className="popup_modal_table_input">
-                <select
-                  className="popup_modal_table_text"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                >
-                  <option value="">Select...</option>
-                  {modalConstants.currency.map((x) => {
-                    const value = getConstantOptionValue(x);
-                    return <option key={value} value={value}>{value}</option>;
-                  })}
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Exchange</td>
-              <td className="popup_modal_table_input">
-                <select
-                  className="popup_modal_table_text"
-                  value={exchange}
-                  onChange={(e) => setExchange(e.target.value)}
-                >
-                  <option value="">Select...</option>
-                  {modalConstants.exchange.map((x) => {
-                    const value = getConstantOptionValue(x);
-                    return <option key={value} value={value}>{value}</option>;
-                  })}
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Platform</td>
-              <td className="popup_modal_table_input">
-                <select
-                  className="popup_modal_table_text"
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value)}
-                >
-                  <option value="">Select...</option>
-                  {modalConstants.platform.map((x) => {
-                    const value = getConstantOptionValue(x);
-                    return <option key={value} value={value}>{value}</option>;
-                  })}
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Units</td>
-              <td className="popup_modal_table_input">
-                <input
-                  className="popup_modal_table_text"
-                  type="number"
-                  onChange={(e) => setUnits(parseFloat(e.target.value) || 0)}
-                ></input>
-              </td>
-            </tr>
-            
-            <tr>
-              <td className="popup_modal_table_label">Price/Unit</td>
-              <td className="popup_modal_table_input">
-                <input
-                  className="popup_modal_table_text"
-                  type="number"
-                  onChange={(e) => setPricePerUnit(parseFloat(e.target.value) || 0)}
-                ></input>
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Fee</td>
-              <td className="popup_modal_table_input">
-                <input
-                  className="popup_modal_table_text"
-                  type="number"
-                  onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
-                ></input>
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Date</td>
-              <td className="popup_modal_table_input">
-                <DatePicker
-                  locale="enAU"
-                  dateFormat="dd/MM/yyyy"
-                  selected={date}
-                  onChange={(d: Date | null) => d && setDate(d)}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div>
-          <button
-            type="button"
-            className="save"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose("ok");
+    <Dialog open onClose={() => handleClose("cancel")} maxWidth="md" fullWidth>
+      <DialogTitle>New Purchase</DialogTitle>
+      <DialogContent dividers>
+        <Typography paragraph>
+          If you have purchased shares in an existing investment, use this dialog to add the details of the purchase to your portfolio.
+        </Typography>
 
-              const result = {
-                symbol: symbol,
-                currency: currency,
-                exchange: exchange,
-                platform: platform,
-                units: units,
-                pricePerUnit: pricePerUnit,
-                fee: fee,
-                date: date,
-              };
-              fetch(endpoint_string, {
-                method: "POST",
-                headers: {
-                  Accept: "application/json",
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(result),
-              });
-              console.log(JSON.stringify(result));
-            }}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className="cancel"
-            style={{ marginRight: "3rem" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose("cancel");
-            }}
-          >
-            Cancel
-          </button>
-      </div>
-    </div>
-  </div>);
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div>
+            <Typography variant="subtitle2">Symbol</Typography>
+            <Typography>{symbol}</Typography>
+          </div>
+          <div>
+            <Typography variant="subtitle2">Name</Typography>
+            <Typography>{name}</Typography>
+          </div>
+
+          <FormControl fullWidth>
+            <InputLabel id="currency-label">Currency</InputLabel>
+            <Select
+              labelId="currency-label"
+              value={currency}
+              label="Currency"
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              <MenuItem value="">Select...</MenuItem>
+              {modalConstants.currency.map((x) => {
+                const value = getConstantOptionValue(x);
+                return <MenuItem key={value} value={value}>{value}</MenuItem>;
+              })}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth>
+            <InputLabel id="exchange-label">Exchange</InputLabel>
+            <Select
+              labelId="exchange-label"
+              value={exchange}
+              label="Exchange"
+              onChange={(e) => setExchange(e.target.value)}
+            >
+              <MenuItem value="">Select...</MenuItem>
+              {modalConstants.exchange.map((x) => {
+                const value = getConstantOptionValue(x);
+                return <MenuItem key={value} value={value}>{value}</MenuItem>;
+              })}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth>
+            <InputLabel id="platform-label">Platform</InputLabel>
+            <Select
+              labelId="platform-label"
+              value={platform}
+              label="Platform"
+              onChange={(e) => setPlatform(e.target.value)}
+            >
+              <MenuItem value="">Select...</MenuItem>
+              {modalConstants.platform.map((x) => {
+                const value = getConstantOptionValue(x);
+                return <MenuItem key={value} value={value}>{value}</MenuItem>;
+              })}
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="Units"
+            type="number"
+            fullWidth
+            onChange={(e) => setUnits(parseFloat(e.target.value) || 0)}
+          />
+
+          <TextField
+            label="Price/Unit"
+            type="number"
+            fullWidth
+            onChange={(e) => setPricePerUnit(parseFloat(e.target.value) || 0)}
+          />
+
+          <TextField
+            label="Fee"
+            type="number"
+            fullWidth
+            onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
+          />
+
+          <div>
+            <Typography variant="subtitle2">Date</Typography>
+            <DatePicker
+              locale="enAU"
+              dateFormat="dd/MM/yyyy"
+              selected={date}
+              onChange={(d: Date | null) => d && setDate(d)}
+            />
+          </div>
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          color="primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClose("ok");
+
+            const result = {
+              symbol: symbol,
+              currency: currency,
+              exchange: exchange,
+              platform: platform,
+              units: units,
+              pricePerUnit: pricePerUnit,
+              fee: fee,
+              date: date,
+            };
+            fetch(endpoint_string, {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(result),
+            });
+            console.log(JSON.stringify(result));
+          }}
+        >
+          Save
+        </Button>
+        <Button onClick={() => handleClose("cancel")}>Cancel</Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
 
 export default PurchaseModal;

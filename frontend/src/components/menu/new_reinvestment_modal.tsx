@@ -1,98 +1,87 @@
 import { useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import "./popup_styles.css";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Typography,
+  Stack,
+} from "@mui/material";
 
 type NewReinvestmentModalProps = {
+  open: boolean;
   endpoint: string;
   onClose: () => void;
 };
 
-function NewReinvestmentModal({ endpoint, onClose }: NewReinvestmentModalProps) {
+function NewReinvestmentModal({ open, endpoint, onClose }: NewReinvestmentModalProps) {
   const [symbol, setSymbol] = useState("");
-  const [date, setDate] = useState<Date | null>(new Date());
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [units, setUnits] = useState("");
 
   const handleClose = () => {
     onClose();
   };
 
-  return (
-    <div className="popup_overlay">
-      <div className="popup_modal new_investment_modal">
-        <h2 className="popup_heading">New Re-investment Allocation</h2>
-        <p>
-          When dividends are reinvested, this will add the required units to the Investment
-          at the given price and date.
-        </p>
-        <table className="popup_modal_table">
-          <tbody>
-            <tr>
-              <td className="popup_modal_table_label">Symbol</td>
-              <td className="popup_modal_table_input">
-                <input
-                  className="popup_modal_table_text"
-                  id={symbol}
-                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                />
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Date</td>
-              <td className="popup_modal_table_input">
-              <DatePicker selected={date} onChange={(date) => setDate(date)} />
-              </td>
-            </tr>
-            <tr>
-              <td className="popup_modal_table_label">Units</td>
-              <td className="popup_modal_table_input">
-                <input
-                  className="popup_modal_table_text"
-                  id={symbol}
-                  onChange={(e) => setUnits(e.target.value)}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-          <button
-            type="button"
-            className="save"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose();
+  const handleSave = () => {
+    handleClose();
 
-              const result = {
-                symbol: symbol,
-                date: date,
-                units: units,
-              };
-              fetch(endpoint, {
-                method: "POST",
-                headers: {
-                  Accept: "application/json",
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(result),
-              });
-              console.log(JSON.stringify(result));
-            }}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className="cancel"
-            style={{ marginRight: "3rem" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose();
-            }}
-          >
-            Cancel
-        </button>
-      </div>
-    </div>
+    const result = {
+      symbol,
+      date,
+      units,
+    };
+
+    fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(result),
+    });
+
+    console.log(JSON.stringify(result));
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <DialogTitle>New Re-investment Allocation</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" gutterBottom>
+          When dividends are reinvested, this will add the required units to the investment at the given price and date.
+        </Typography>
+        <Stack spacing={2}>
+          <TextField
+            fullWidth
+            label="Symbol"
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+          />
+          <TextField
+            fullWidth
+            label="Date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+          <TextField
+            fullWidth
+            label="Units"
+            value={units}
+            onChange={(e) => setUnits(e.target.value)}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose}>Cancel</Button>
+        <Button variant="contained" color="primary" onClick={handleSave}>
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
