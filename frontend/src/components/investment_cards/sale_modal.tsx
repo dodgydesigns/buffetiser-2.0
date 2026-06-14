@@ -45,12 +45,12 @@ function SaleModal({ investment, constants, endpoint, onClose }: SaleModalProps)
   const [date, setDate] = useState(new Date());
   const endpoint_string = endpoint;
 
-  const handleClose = (saved: boolean) => {
-    onClose(saved);
+  const handleClose = () => {
+    onClose(true);
   };
 
   return (
-    <Dialog open onClose={() => handleClose(false)} maxWidth="md" fullWidth>
+    <Dialog open onClose={() => handleClose()} maxWidth="md" fullWidth>
       <DialogTitle>New Sale</DialogTitle>
       <DialogContent dividers>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -147,7 +147,7 @@ function SaleModal({ investment, constants, endpoint, onClose }: SaleModalProps)
         <Button
           onClick={(e) => {
             e.stopPropagation();
-            handleClose(true);
+            handleClose();
 
             const result = {
               symbol: symbol,
@@ -173,7 +173,7 @@ function SaleModal({ investment, constants, endpoint, onClose }: SaleModalProps)
         >
           Save
         </Button>
-        <Button onClick={() => handleClose(false)}>Cancel</Button>
+        <Button onClick={(e) => {e.stopPropagation(); handleClose()}}>Cancel</Button>
       </DialogActions>
     </Dialog>
   );

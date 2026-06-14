@@ -9,7 +9,6 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
-import "../../index.css";
 import type { InvestmentHistoryPoint } from "./types";
 
 type TooltipPayload = {
@@ -26,15 +25,16 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">
-        <p className="tooltip-desc" style={{ color: `${payload[1].color}` }}>
-          ${payload[1].value}
-        </p>
-        <p className="tooltip-desc" style={{ color: `${payload[2].color}` }}>
-          ${payload[2].value}
-        </p>
-        <p className="tooltip-desc" style={{ color: `${payload[3].color}` }}>
-          ${payload[3].value}
-        </p>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          <li style={{ color: payload[2].color }}>
+            <span style={{ display: "inline-block", width: "50px" }}>High:</span>
+            ${payload[2].value}
+          </li>
+          <li style={{ color: payload[1].color }}>
+            <span style={{ display: "inline-block", width: "50px" }}>Low:</span>
+            ${payload[1].value}
+          </li>
+        </ul>
       </div>
     );
   }
@@ -58,13 +58,14 @@ export default function InvestmentCharts({ investment_history }: InvestmentChart
           <XAxis
             dataKey="date"
             stroke="#ffffff"
-            fontSize="10"
+            fontSize="1"
             padding={{ left: 20, right: 20 }}
           />
           <YAxis
             yAxisId="left"
             stroke="#ffffff"
             fontSize="10"
+            padding={{ bottom: 5 }}
             domain={["dataMin", "auto"]}
           />
           <YAxis
@@ -72,6 +73,7 @@ export default function InvestmentCharts({ investment_history }: InvestmentChart
             orientation="right"
             stroke="#ffffff"
             fontSize="10"
+            padding={{ bottom: 5 }}
             domain={["dataMin", "auto"]}
           />
           <Tooltip content={<CustomTooltip />} />
@@ -88,21 +90,14 @@ export default function InvestmentCharts({ investment_history }: InvestmentChart
             type="monotone"
             dataKey="low"
             stroke="#ff3333"
-            activeDot={{ r: 8 }}
+            dot={{ r: 1 }}
           />
           <Line
             yAxisId="left"
             type="monotone"
             dataKey="high"
             stroke="#82ca9d"
-            activeDot={{ r: 8 }}
-          />
-          <Line
-            yAxisId="left"
-            type="monotone"
-            dataKey="close"
-            stroke="#f5e642"
-            activeDot={{ r: 8 }}
+            dot={{ r: 1 }}
           />
       </ComposedChart>
     </ResponsiveContainer>

@@ -2,6 +2,7 @@ import * as React from "react";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import { useNavigate } from "react-router-dom";
 import AdminDialog from "./admin_dialog";
 import NewPurchaseModal from "../investment_cards/purchase_modal_new";
 import { InvestmentModalConstants } from "../investment_cards/types";
@@ -12,6 +13,8 @@ interface BasicMenuProps {
 }
 
 export default function BasicMenu({ constants }: BasicMenuProps) {
+  const navigate = useNavigate();
+
   const baseURL = "/api/v1";
   const id = React.useId();
 
@@ -145,6 +148,13 @@ export default function BasicMenu({ constants }: BasicMenuProps) {
         endpoint={baseURL}
         onClose={() => setReinvestmentOpen(false)}
       />
+
+      <Button
+        style={{ color: "white", backgroundColor: "transparent" }}
+        onClick={() => navigate("/reports/")}
+      >
+        Report
+      </Button>
     </div>
   );
 }

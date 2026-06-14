@@ -46,21 +46,18 @@ function PurchaseModal({ investment, constants, endpoint, onClose }: PurchaseMod
   const [date, setDate] = useState(new Date());
   const endpoint_string = endpoint;
 
-  const handleClose = (button: "ok" | "cancel") => {
-    if (button === "ok") {
+  const handleClose = () => {
       onClose(true);
       return;
-    }
-    onClose(false);
   };
 
   return (
-    <Dialog open onClose={() => handleClose("cancel")} maxWidth="md" fullWidth>
+    <Dialog open onClose={() => handleClose()} maxWidth="md" fullWidth>
       <DialogTitle>New Purchase</DialogTitle>
       <DialogContent dividers>
-        <Typography paragraph>
+        <p>
           If you have purchased shares in an existing investment, use this dialog to add the details of the purchase to your portfolio.
-        </Typography>
+        </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div>
@@ -157,7 +154,7 @@ function PurchaseModal({ investment, constants, endpoint, onClose }: PurchaseMod
           color="primary"
           onClick={(e) => {
             e.stopPropagation();
-            handleClose("ok");
+            handleClose();
 
             const result = {
               symbol: symbol,
@@ -182,7 +179,7 @@ function PurchaseModal({ investment, constants, endpoint, onClose }: PurchaseMod
         >
           Save
         </Button>
-        <Button onClick={() => handleClose("cancel")}>Cancel</Button>
+        <Button onClick={(e) => {e.stopPropagation(); handleClose()}}>Cancel</Button>
       </DialogActions>
     </Dialog>
   );

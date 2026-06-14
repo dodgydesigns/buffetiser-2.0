@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
 import MenuBar from "./menu/menu_bar";
 import InvestmentCard from "./investment_cards/investment_card";
 import TotalsCard from "./totals_card";
 import type { Investment, InvestmentModalConstants } from "./investment_cards/types";
-
-import "../index.css";
 
 
 type InvestmentCardsProps = {
@@ -45,7 +42,7 @@ export default function Dashboard() {
     axios
       .get("api/v1/all")
       .then((response) => {
-        console.log(response.data.all_investment_data);
+        // console.log(response.data.all_investment_data);
         setAllInvestments(response.data.all_investment_data);
       })
       .catch((error) => {

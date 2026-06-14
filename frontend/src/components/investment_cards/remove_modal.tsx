@@ -21,12 +21,12 @@ function RemoveModal({ investment, endpoint, onClose }: RemoveModalProps) {
   const [name] = useState(investment.name);
   const endpoint_string = endpoint;
 
-  const handleClose = (saved: boolean) => {
-    onClose(saved);
+  const handleClose = () => {
+    onClose(true);
   };
 
   return (
-    <Dialog open onClose={() => handleClose(false)} maxWidth="sm" fullWidth>
+    <Dialog open onClose={() => handleClose()} maxWidth="sm" fullWidth>
       <DialogTitle>Remove Investment</DialogTitle>
       <DialogContent dividers>
         <Typography gutterBottom>
@@ -45,7 +45,7 @@ function RemoveModal({ investment, endpoint, onClose }: RemoveModalProps) {
           variant="contained"
           onClick={(e) => {
             e.stopPropagation();
-            handleClose(true);
+            handleClose();
             const result = { symbol: symbol };
             fetch(endpoint_string, {
               method: "POST",
@@ -57,7 +57,7 @@ function RemoveModal({ investment, endpoint, onClose }: RemoveModalProps) {
         >
           REMOVE
         </Button>
-        <Button onClick={() => handleClose(false)}>Cancel</Button>
+        <Button onClick={(e) => {e.stopPropagation(); handleClose()}}>Cancel</Button>
       </DialogActions>
     </Dialog>
   );
