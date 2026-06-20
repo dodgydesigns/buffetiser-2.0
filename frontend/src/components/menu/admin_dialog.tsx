@@ -30,23 +30,39 @@ export default function AdminDialog({
     if (!open) return;
 
     async function getData() {
-      const response = await fetch(`${baseURL}/cron_time/`);
-      const json = await response.json();
-      setCronTime(json.cron_time);
+      try {
+        const response = await fetch(`${baseURL}/cron_time/`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch cron time: ${response.status} ${response.statusText}`);
+        }
+        const json = await response.json();
+        setCronTime(json.cron_time);
+      } catch (error) {
+        console.error("Error fetching cron time:", error);
+      }
     }
 
     getData();
   }, [baseURL, open]);
 
   async function post(endpoint: string, body?: unknown) {
-    await fetch(`${baseURL}${endpoint}`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+      const response = await fetch(`${baseURL}${endpoint}`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error in POST request:", error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   return (

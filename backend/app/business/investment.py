@@ -1,0 +1,34 @@
+from app.core.constants import Exchanges, InvestmentType
+from app.models.investment import Investment
+
+
+def generate_key(exchange: Exchanges | str, symbol: str) -> str:
+    exchange_value = exchange.value if isinstance(exchange, Exchanges) else exchange
+    return f"{exchange_value}-{symbol}"
+
+
+def total_units(investment: Investment) -> float:
+    total = sum(p.units for p in investment.purchases) - sum(s.units for s in investment.sales)
+    return int(total) if investment.type == InvestmentType.SHARES else total
+
+
+def total_fees(investment: Investment) -> float:
+    return sum(p.fee for p in investment.purchases) + sum(s.fee for s in investment.sales)
+
+
+def total_cost_excluding_fees(investment: Investment) -> float:
+    cost = sum(p.price_per_unit * p.units for p in investment.purchases)
+    cost -= sum(s.price_per_unit * s.units for s in investment.sales)
+    return cost
+
+
+def average_cost_excluding_fees(investment: Investment) -> float:
+    return total_cost_excluding_fees(investment) / total_units(investment) if total_units(investment) else 0
+
+
+def total_value(investment: Investment) -> float:
+    return total_units(investment) * investment.live_price
+
+
+def total_profit(investment: Investment) -> float:
+    return total_value(investment) - total_cost_excluding_fees(investment) - total_fees(investment)

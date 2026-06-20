@@ -33,7 +33,17 @@ function NewDividendModal({ open, endpoint, onClose }: NewDividendModalProps) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(result),
-    });
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to save dividend: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        console.error("Error saving dividend:", error);
+        alert(`Error saving dividend: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      });
 
     console.log(JSON.stringify(result));
   };

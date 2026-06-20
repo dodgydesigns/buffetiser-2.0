@@ -6,3 +6,4 @@ python-dotenv
 psycopg[binary]
 pydantic-settings
 email-validator
+httpx

@@ -41,7 +41,17 @@ function NewReinvestmentModal({ open, endpoint, onClose }: NewReinvestmentModalP
         "Content-Type": "application/json",
       },
       body: JSON.stringify(result),
-    });
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to save reinvestment: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        console.error("Error saving reinvestment:", error);
+        alert(`Error saving reinvestment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      });
 
     console.log(JSON.stringify(result));
   };

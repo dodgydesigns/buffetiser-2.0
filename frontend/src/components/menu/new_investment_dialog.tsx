@@ -30,17 +30,26 @@ export default function NewInvestmentDialog({
       name,
     };
 
-    await fetch(baseURL, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(result),
-    });
+    try {
+      const response = await fetch(baseURL, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(result),
+      });
 
-    console.log(JSON.stringify(result));
-    onClose();
+      if (!response.ok) {
+        throw new Error(`Failed to create investment: ${response.status} ${response.statusText}`);
+      }
+
+      console.log(JSON.stringify(result));
+      onClose();
+    } catch (error) {
+      console.error("Error creating investment:", error);
+      alert(`Error creating investment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   return (

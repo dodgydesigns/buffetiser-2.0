@@ -97,7 +97,7 @@ export default function BasicMenu({ constants }: BasicMenuProps) {
         <NewPurchaseModal
           className="buy"
           constants={constants}
-          endpoint={baseURL + "/purchase/"}
+          endpoint={baseURL + "/purchase"}
           onClose={() => setBuyOpen(false)}
         />
       )}

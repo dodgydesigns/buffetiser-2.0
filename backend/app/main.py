@@ -1,7 +1,17 @@
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 import logging
+from sqlalchemy.orm import Session
 
 from app.core.constants import get_constants
+from app.core.purchase import (
+    DuplicatePurchaseError,
+    InvestmentNotFoundError,
+    PurchaseCreate,
+    PurchaseRead,
+    create_purchase,
+)
+from app.db.session import get_db
 
 # from app.api.v1.main import api_router
 _logger = logging.getLogger(__name__)
@@ -1467,6 +1477,15 @@ _all_investment_data = [
 
 app = FastAPI(title="Buffetiser API")
 
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins - adjust for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 api_v1 = APIRouter(prefix="/api/v1")
 
 @api_v1.get("/health")
@@ -1482,5 +1501,24 @@ def all_investments():
 def constants():
     _logger.info("Constants endpoint hit")
     return {"constants": get_constants()}
+
+@api_v1.post(
+    "/purchase",
+    response_model=PurchaseRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def post_purchase(purchase_in: PurchaseCreate, db: Session = Depends(get_db)):
+    try:
+        return create_purchase(db, purchase_in)
+    except InvestmentNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Investment not found",
+        ) from exc
+    except DuplicatePurchaseError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Purchase already exists",
+        ) from exc
 
 app.include_router(api_v1)
