@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy.pool import StaticPool
-from sqlmodel import SQLModel, Session, create_engine
-
 from app.core.purchase import PurchaseCreate, create_purchase
 from app.models.investment import Investment
+from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine
 
 
 def test_create_purchase_uses_name_for_new_investment():

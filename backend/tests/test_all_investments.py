@@ -1,8 +1,5 @@
 from datetime import datetime
 
-from sqlalchemy.pool import StaticPool
-from sqlmodel import SQLModel, Session, create_engine
-
 from app.db.session import get_db
 from app.main import app
 from app.models.daily_change import DailyChange
@@ -10,6 +7,8 @@ from app.models.history import History
 from app.models.investment import Investment
 from app.models.purchase import Purchase
 from app.models.sale import Sale
+from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine
 
 
 def test_all_investments_returns_computed_dashboard_data(client):

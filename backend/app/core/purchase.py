@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-from sqlmodel import SQLModel, select
-
+from app.business.investment import generate_key
 from app.core.constants import Exchanges, Platforms
 from app.models.investment import Investment
 from app.models.purchase import Purchase
-from app.business.investment import generate_key
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+from sqlmodel import SQLModel, select
 
 
 class PurchaseCreate(SQLModel):
@@ -58,9 +57,7 @@ def create_purchase(db: Session, purchase_in: PurchaseCreate) -> Purchase:
         symbol=purchase_in.symbol,
     )
 
-    investment = db.scalar(
-        select(Investment).where(Investment.key == investment_key)
-    )
+    investment = db.scalar(select(Investment).where(Investment.key == investment_key))
 
     if investment is None:
         investment = Investment(

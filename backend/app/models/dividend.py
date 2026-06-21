@@ -6,6 +6,7 @@ from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 if TYPE_CHECKING:
     from app.models.investment import Investment
 
+
 class DividendReinvestment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
@@ -16,9 +17,8 @@ class DividendReinvestment(SQLModel, table=True):
     units: int = 0
     price_per_unit: float
 
-    __table_args__ = (
-        UniqueConstraint("date", "investment_key"),
-    )
+    __table_args__ = (UniqueConstraint("date", "investment_key"),)
+
 
 class DividendPayment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -29,6 +29,4 @@ class DividendPayment(SQLModel, table=True):
     date: datetime
     value: float
 
-    __table_args__ = (
-        UniqueConstraint("date", "investment_key"),
-    )
+    __table_args__ = (UniqueConstraint("date", "investment_key"),)

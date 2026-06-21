@@ -1,8 +1,5 @@
 from datetime import datetime
 
-from sqlalchemy.pool import StaticPool
-from sqlmodel import SQLModel, Session, create_engine, select
-
 from app.db.session import get_db
 from app.main import app
 from app.models.daily_change import DailyChange
@@ -11,6 +8,8 @@ from app.models.history import History
 from app.models.investment import Investment
 from app.models.purchase import Purchase
 from app.models.sale import Sale
+from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine, select
 
 
 def test_delete_investment_removes_investment_and_related_records(client):

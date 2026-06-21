@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional
-from sqlmodel import SQLModel, Field, Relationship
 
 from app.core.constants import InvestmentType
+from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from app.models.history import History

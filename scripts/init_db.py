@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
@@ -22,4 +23,4 @@ db_echo = os.getenv("DB_ECHO", "false").lower() == "true"
 engine = create_engine(database_url, echo=db_echo)
 SQLModelBase.metadata.create_all(bind=engine)
 
-print('Created database tables')
+print("Created database tables")

@@ -1,9 +1,4 @@
-from sqlalchemy import delete, select
-from sqlalchemy.orm import Session, selectinload
-from sqlmodel import SQLModel
 from typing import Any, cast
-from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
 
 from app.business.investment import (
     average_cost,
@@ -18,6 +13,9 @@ from app.models.history import History
 from app.models.investment import Investment
 from app.models.purchase import Purchase
 from app.models.sale import Sale
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session, selectinload
+from sqlmodel import SQLModel, col, select
 
 
 class InvestmentNotFoundError(Exception):
@@ -53,9 +51,7 @@ class AllInvestmentsRead(SQLModel):
 
 
 def _daily_changes_by_symbol(db: Session) -> dict[str, DailyChange]:
-    changes = db.scalars(
-        select(DailyChange).order_by(col(DailyChange.id))
-    ).all()
+    changes = db.scalars(select(DailyChange).order_by(col(DailyChange.id))).all()
     return {change.symbol: change for change in changes}
 
 

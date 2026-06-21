@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
-
 from app.core.constants import Exchanges
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 if TYPE_CHECKING:
     from app.models.investment import Investment
+
 
 class Sale(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -23,6 +23,4 @@ class Sale(SQLModel, table=True):
     date: datetime
     trade_count: int
 
-    __table_args__ = (
-        UniqueConstraint("date", "trade_count", "investment_key"),
-    )
+    __table_args__ = (UniqueConstraint("date", "trade_count", "investment_key"),)
