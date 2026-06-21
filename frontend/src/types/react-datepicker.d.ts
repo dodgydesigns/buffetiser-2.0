@@ -1,7 +1,8 @@
 declare module "react-datepicker" {
-  import type { ComponentType } from "react";
+  import type { ComponentType, ReactElement } from "react";
 
   export type ReactDatePickerProps = {
+    customInput?: ReactElement;
     dateFormat?: string;
     locale?: string;
     selected?: Date | null;

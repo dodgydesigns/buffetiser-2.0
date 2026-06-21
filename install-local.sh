@@ -37,6 +37,6 @@ npm install #--legacy-peer-deps
 
 echo "\nLocal dependencies installed successfully."
 echo "Next steps:"
-echo "  1. Copy infra/.env.example to infra/.env"
-echo "  2. Copy backend/.env.example to backend/.env"
-echo "  3. Run: docker compose -f infra/docker-compose.dev.yml up --build"
+echo "  1. Copy backend/.env.example to backend/.env"
+echo "  2. Run: docker compose up --build"
+echo "  3. Open: http://localhost"

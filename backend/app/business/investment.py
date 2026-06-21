@@ -26,9 +26,23 @@ def average_cost_excluding_fees(investment: Investment) -> float:
     return total_cost_excluding_fees(investment) / total_units(investment) if total_units(investment) else 0
 
 
+def total_cost(investment: Investment) -> float:
+    return total_cost_excluding_fees(investment) + total_fees(investment)
+
+
+def average_cost(investment: Investment) -> float:
+    units = total_units(investment)
+    return total_cost(investment) / units if units else 0
+
+
 def total_value(investment: Investment) -> float:
     return total_units(investment) * investment.live_price
 
 
 def total_profit(investment: Investment) -> float:
-    return total_value(investment) - total_cost_excluding_fees(investment) - total_fees(investment)
+    return total_value(investment) - total_cost(investment)
+
+
+def total_profit_percent(investment: Investment) -> float:
+    cost = total_cost(investment)
+    return total_profit(investment) / cost * 100 if cost else 0

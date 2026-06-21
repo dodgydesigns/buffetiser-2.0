@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, select
 
 from app.core.constants import Exchanges, Platforms
 from app.models.investment import Investment
@@ -14,6 +14,7 @@ from app.business.investment import generate_key
 
 class PurchaseCreate(SQLModel):
     symbol: str
+    name: str | None = None
     currency: str = "AUD"
     exchange: Exchanges = Exchanges.XASX
     platform: Platforms = Platforms.CMC
@@ -57,13 +58,15 @@ def create_purchase(db: Session, purchase_in: PurchaseCreate) -> Purchase:
         symbol=purchase_in.symbol,
     )
 
-    investment = db.query(Investment).filter_by(key=investment_key).first()
+    investment = db.scalar(
+        select(Investment).where(Investment.key == investment_key)
+    )
 
     if investment is None:
         investment = Investment(
             symbol=purchase_in.symbol,
             key=investment_key,
-            name=purchase_in.symbol,
+            name=purchase_in.name or purchase_in.symbol,
         )
         db.add(investment)
         db.commit()
@@ -71,8 +74,9 @@ def create_purchase(db: Session, purchase_in: PurchaseCreate) -> Purchase:
 
     purchase_data = purchase_in.model_dump()
 
-    # Purchase table does not have symbol
+    # Purchase table does not have symbol or name
     purchase_data.pop("symbol", None)
+    purchase_data.pop("name", None)
 
     # Use the generated investment key, not frontend value
     purchase_data["investment_key"] = investment.key

@@ -58,6 +58,55 @@ body {
   flex: 1;
 }
 
+.empty-portfolio {
+  min-height: calc(100vh - 5rem);
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.empty-portfolio__card {
+  width: min(30rem, 90vw);
+  padding: 2rem 2rem 2.5rem;
+  text-align: center;
+  color: var(--WHITE);
+  background: linear-gradient(145deg, #143449, #1b536f);
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 2rem;
+  box-shadow: 0 1.5rem 4rem rgb(8 31 47 / 35%);
+}
+
+.empty-portfolio__logo {
+  display: block;
+  width: min(21rem, 72vw);
+  margin: 0 auto 1.5rem;
+  border-radius: 1.5rem;
+}
+
+.empty-portfolio__buy {
+  padding: 0.8rem 1.4rem;
+  color: var(--WHITE);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.empty-portfolio__buy:hover {
+  background-color: rgb(50 130 184 / 35%);
+  transform: translateY(-2px);
+}
+
+.empty-portfolio__buy:focus-visible {
+  outline: 3px solid var(--COLOUR5);
+  outline-offset: 4px;
+}
+
 /* 
 Menu bar at the top of the page.
 */

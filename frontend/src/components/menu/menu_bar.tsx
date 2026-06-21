@@ -10,9 +10,17 @@ import NewDividendModal from "./new_dividend_modal";
 import NewReinvestmentModal from "./new_reinvestment_modal";
 interface BasicMenuProps {
   constants?: InvestmentModalConstants | undefined;
+  buyOpen: boolean;
+  onBuyOpenChange: (open: boolean) => void;
+  onBuyClose: (saved: boolean) => void;
 }
 
-export default function BasicMenu({ constants }: BasicMenuProps) {
+export default function BasicMenu({
+  constants,
+  buyOpen,
+  onBuyOpenChange,
+  onBuyClose,
+}: BasicMenuProps) {
   const navigate = useNavigate();
 
   const baseURL = "/api/v1";
@@ -34,15 +42,6 @@ export default function BasicMenu({ constants }: BasicMenuProps) {
     setConfigAnchorEl(null);
   };
   
-  const buyMenuId = `${id}-buy-button`;
-  const [buyAnchorEl, setBuyAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [buyOpen, setBuyOpen] = React.useState(false);
-  const buyMenuOpen = Boolean(buyAnchorEl);
-  const handleBuyMenuClose = () => {
-    setBuyAnchorEl(null);
-    setBuyOpen(false);
-  };
-
   const returnsMenuId = `${id}-returns-menu`;
   const [returnsAnchorEl, setReturnsAnchorEl] = React.useState<null | HTMLElement>(null);
   const returnsMenuOpen = Boolean(returnsAnchorEl);
@@ -88,7 +87,7 @@ export default function BasicMenu({ constants }: BasicMenuProps) {
       
       <Button
         style={{ color: "white", backgroundColor: "transparent" }}
-        onClick={() => { setBuyOpen(true); setBuyAnchorEl(null); }}
+        onClick={() => onBuyOpenChange(true)}
       >
         Buy
       </Button>
@@ -98,7 +97,7 @@ export default function BasicMenu({ constants }: BasicMenuProps) {
           className="buy"
           constants={constants}
           endpoint={baseURL + "/purchase"}
-          onClose={() => setBuyOpen(false)}
+          onClose={onBuyClose}
         />
       )}
 
@@ -121,14 +120,6 @@ export default function BasicMenu({ constants }: BasicMenuProps) {
       >
         <MenuItem onClick={handleShowDividends}>Dividends</MenuItem>
         <MenuItem onClick={handleShowReinvestment}>Reinvestment</MenuItem>      
-      </Menu>
-
-      <Menu
-        id={buyMenuId}
-        anchorEl={buyAnchorEl}
-        open={buyMenuOpen}
-        onClose={handleBuyMenuClose}
-      >
       </Menu>
 
       <AdminDialog

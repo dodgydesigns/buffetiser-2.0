@@ -1,9 +1,15 @@
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from sqlalchemy.orm import Session
 
 from app.core.constants import get_constants
+from app.core.investment import (
+    AllInvestmentsRead,
+    InvestmentNotFoundError as InvestmentDeleteNotFoundError,
+    delete_investment,
+    get_all_investments,
+)
 from app.core.purchase import (
     DuplicatePurchaseError,
     InvestmentNotFoundError,
@@ -1492,10 +1498,28 @@ api_v1 = APIRouter(prefix="/api/v1")
 def health():
     return {"status": "ok"}
 
-@api_v1.get("/all")
-def all_investments():
+@api_v1.get("/all", response_model=AllInvestmentsRead)
+def all_investments(db: Session = Depends(get_db)):
+    """
+    Return the investment summaries and price history required by the dashboard.
+    """
     _logger.info("All investments endpoint hit")
-    return {"all_investment_data": _all_investment_data}
+    return get_all_investments(db)
+
+@api_v1.delete(
+    "/investments/{investment_key}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_investment(investment_key: str, db: Session = Depends(get_db)):
+    try:
+        delete_investment(db, investment_key)
+    except InvestmentDeleteNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Investment not found",
+        ) from exc
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @api_v1.get("/constants")
 def constants():

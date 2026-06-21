@@ -34,13 +34,19 @@ export default function InvestmentSummary(props: InvestmentSummaryProps) {
   const [showRemoveInvestment, setShowRemoveInvestment] = useState(false);
   
   const handleBuyInvestmentClose = (isOpen: boolean) => {
-    setShowBuyInvestment(isOpen);
+    setShowBuyInvestment(false);
+    if (isOpen) {
+      window.location.reload();
+    }
   };
   const handleSellInvestmentClose = (isOpen: boolean) => {
     setShowSellInvestment(isOpen);
   };
   const handleRemoveInvestmentClose = (isOpen: boolean) => {
-    setShowRemoveInvestment(isOpen);
+    setShowRemoveInvestment(false);
+    if (isOpen) {
+      window.location.reload();
+    }
   };
 
   return (
@@ -85,8 +91,8 @@ export default function InvestmentSummary(props: InvestmentSummaryProps) {
         <PurchaseModal className="buy"
           investment={investment} 
           constants={constants}
-          endpoint={baseURL + "/purchase/"}
-          onClose={() => handleBuyInvestmentClose(false)}
+          endpoint={baseURL + "/purchase"}
+          onClose={handleBuyInvestmentClose}
         ></PurchaseModal>
       )}
         Buy</button>
@@ -109,8 +115,8 @@ export default function InvestmentSummary(props: InvestmentSummaryProps) {
         {showRemoveInvestment && (
           <RemoveModal
           investment={investment} 
-          endpoint={baseURL + "/remove/"}
-          onClose={() => handleRemoveInvestmentClose(false)}
+          endpoint={baseURL + "/investments"}
+          onClose={handleRemoveInvestmentClose}
           ></RemoveModal>
         )}
         Remove</button>

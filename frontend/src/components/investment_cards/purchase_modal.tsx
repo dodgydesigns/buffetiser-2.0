@@ -1,21 +1,19 @@
-import React, { useState } from "react";
-import DatePicker from "react-datepicker";
-import { registerLocale } from "react-datepicker";
-import enAU from 'date-fns/locale/en-AU';
-
-import "../menu/popup_styles.css";
+import { forwardRef, useState } from "react";
+import DatePicker, { registerLocale } from "react-datepicker";
+import enAU from "date-fns/locale/en-AU";
 import "react-datepicker/dist/react-datepicker.css";
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
+
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
+
 import {
   getConstantOptionValue,
   normaliseModalConstants,
@@ -23,166 +21,234 @@ import {
   type InvestmentModalConstants,
 } from "./types";
 
-registerLocale('enAU', enAU);
+registerLocale("enAU", enAU);
 
-type PurchaseModalProps = {
+export type PurchaseModalProps = {
   className?: string;
   investment: Pick<Investment, "symbol" | "name">;
+  editableInvestment?: boolean;
   constants?: InvestmentModalConstants;
   endpoint: string;
   onClose: (saved: boolean) => void;
 };
 
-function PurchaseModal({ investment, constants, endpoint, onClose }: PurchaseModalProps) {
+type DateInputProps = {
+  value?: string;
+  onClick?: () => void;
+};
+
+const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
+  ({ value, onClick }, ref) => (
+    <TextField
+      id="date-input"
+      color="primary"
+      margin="dense"
+      label="Date"
+      fullWidth
+      onClick={onClick}
+      inputRef={ref}
+      value={value ?? ""}
+      slotProps={{ htmlInput: { readOnly: true } }}
+      sx={{ "& .MuiOutlinedInput-root": { color: "#777777", fontSize: "1.1em" } }}
+    />
+  )
+);
+
+DateInput.displayName = "DateInput";
+
+export default function PurchaseModal({
+  investment,
+  editableInvestment = false,
+  constants,
+  endpoint,
+  onClose,
+}: PurchaseModalProps) {
   const modalConstants = normaliseModalConstants(constants);
-  const [symbol] = useState(investment.symbol);
-  const [name] = useState(investment.name);
-  const [currency, setCurrency] = useState("");
-  const [exchange, setExchange] = useState("");
-  const [platform, setPlatform] = useState("");
+
+  const [symbol, setSymbol] = useState(investment.symbol);
+  const [name, setName] = useState(investment.name);
+  const [currency, setCurrency] = useState("AUD");
+  const [exchange, setExchange] = useState("XASX");
+  const [platform, setPlatform] = useState("CMC");
   const [units, setUnits] = useState(0);
   const [pricePerUnit, setPricePerUnit] = useState(0);
   const [fee, setFee] = useState(0);
-  const [date, setDate] = useState(new Date());
-  const endpoint_string = endpoint;
+  const [date, setDate] = useState<Date>(new Date());
+  const [saving, setSaving] = useState(false);
 
-  const handleClose = () => {
-      onClose(true);
+  const handleSave = async () => {
+    if (!symbol || !currency || !exchange || !platform) {
+      alert("Please fill in symbol, currency, exchange and platform.");
       return;
+    }
+
+    setSaving(true);
+
+    const result = {
+      symbol,
+      name: name || symbol,
+      currency,
+      exchange,
+      platform,
+      units,
+      price_per_unit: pricePerUnit,
+      fee,
+      date: date.toISOString(),
+      trade_count: 1,
+    };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(result),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          `Failed to save purchase: ${response.status} ${
+            errorData.detail || response.statusText
+          }`
+        );
+      }
+
+      onClose(true);
+    } catch (error) {
+      setSaving(false);
+      alert(
+        `Error saving purchase: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   };
 
   return (
-    <Dialog open onClose={() => handleClose()} maxWidth="md" fullWidth>
+    <Dialog
+      open
+      onClose={() => {
+        if (!saving) onClose(false);
+      }}
+      maxWidth="sm"
+      fullWidth
+    >
       <DialogTitle>New Purchase</DialogTitle>
+
       <DialogContent dividers>
-        <p>
-          If you have purchased shares in an existing investment, use this dialog to add the details of the purchase to your portfolio.
-        </p>
+        <p>Add the purchase details to your portfolio.</p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div>
-            <Typography variant="subtitle2">Symbol</Typography>
-            <Typography>{symbol}</Typography>
-          </div>
-          <div>
-            <Typography variant="subtitle2">Name</Typography>
-            <Typography>{name}</Typography>
-          </div>
+        <TextField
+          margin="dense"
+          label="Symbol"
+          fullWidth
+          type="text"
+          value={symbol}
+          disabled={!editableInvestment}
+          onChange={(event) => setSymbol(event.target.value.toUpperCase())}
+        />
 
-          <FormControl fullWidth>
-            <InputLabel id="currency-label">Currency</InputLabel>
-            <Select
-              labelId="currency-label"
-              value={currency}
-              label="Currency"
-              onChange={(e) => setCurrency(e.target.value)}
-            >
-              <MenuItem value="">Select...</MenuItem>
-              {modalConstants.currency.map((x) => {
-                const value = getConstantOptionValue(x);
-                return <MenuItem key={value} value={value}>{value}</MenuItem>;
-              })}
-            </Select>
-          </FormControl>
+        <TextField
+          margin="dense"
+          label="Name"
+          fullWidth
+          type="text"
+          value={name}
+          disabled={!editableInvestment}
+          onChange={(event) => setName(event.target.value)}
+        />
 
-          <FormControl fullWidth>
-            <InputLabel id="exchange-label">Exchange</InputLabel>
-            <Select
-              labelId="exchange-label"
-              value={exchange}
-              label="Exchange"
-              onChange={(e) => setExchange(e.target.value)}
-            >
-              <MenuItem value="">Select...</MenuItem>
-              {modalConstants.exchange.map((x) => {
-                const value = getConstantOptionValue(x);
-                return <MenuItem key={value} value={value}>{value}</MenuItem>;
-              })}
-            </Select>
-          </FormControl>
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Currency</InputLabel>
+          <Select
+            value={currency}
+            label="Currency"
+            onChange={(event) => setCurrency(event.target.value)}
+          >
+            {modalConstants.currency.map((option) => {
+              const value = getConstantOptionValue(option);
+              return <MenuItem key={value} value={value}>{value}</MenuItem>;
+            })}
+          </Select>
+        </FormControl>
 
-          <FormControl fullWidth>
-            <InputLabel id="platform-label">Platform</InputLabel>
-            <Select
-              labelId="platform-label"
-              value={platform}
-              label="Platform"
-              onChange={(e) => setPlatform(e.target.value)}
-            >
-              <MenuItem value="">Select...</MenuItem>
-              {modalConstants.platform.map((x) => {
-                const value = getConstantOptionValue(x);
-                return <MenuItem key={value} value={value}>{value}</MenuItem>;
-              })}
-            </Select>
-          </FormControl>
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Exchange</InputLabel>
+          <Select
+            value={exchange}
+            label="Exchange"
+            onChange={(event) => setExchange(event.target.value)}
+          >
+            {modalConstants.exchange.map((option) => {
+              const value = getConstantOptionValue(option);
+              return <MenuItem key={value} value={value}>{value}</MenuItem>;
+            })}
+          </Select>
+        </FormControl>
 
-          <TextField
-            label="Units"
-            type="number"
-            fullWidth
-            onChange={(e) => setUnits(parseFloat(e.target.value) || 0)}
-          />
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Platform</InputLabel>
+          <Select
+            value={platform}
+            label="Platform"
+            onChange={(event) => setPlatform(event.target.value)}
+          >
+            {modalConstants.platform.map((option) => {
+              const value = getConstantOptionValue(option);
+              return <MenuItem key={value} value={value}>{value}</MenuItem>;
+            })}
+          </Select>
+        </FormControl>
 
-          <TextField
-            label="Price/Unit"
-            type="number"
-            fullWidth
-            onChange={(e) => setPricePerUnit(parseFloat(e.target.value) || 0)}
-          />
+        <TextField
+          margin="dense"
+          label="Units"
+          fullWidth
+          type="number"
+          value={units}
+          onChange={(event) => setUnits(parseFloat(event.target.value) || 0)}
+        />
 
-          <TextField
-            label="Fee"
-            type="number"
-            fullWidth
-            onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
-          />
+        <TextField
+          margin="dense"
+          label="Price/Unit"
+          fullWidth
+          type="number"
+          value={pricePerUnit}
+          onChange={(event) => setPricePerUnit(parseFloat(event.target.value) || 0)}
+        />
 
-          <div>
-            <Typography variant="subtitle2">Date</Typography>
-            <DatePicker
-              locale="enAU"
-              dateFormat="dd/MM/yyyy"
-              selected={date}
-              onChange={(d: Date | null) => d && setDate(d)}
-            />
-          </div>
-        </div>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          color="primary"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClose();
+        <TextField
+          margin="dense"
+          label="Fee"
+          fullWidth
+          type="number"
+          value={fee}
+          onChange={(event) => setFee(parseFloat(event.target.value) || 0)}
+        />
 
-            const result = {
-              symbol: symbol,
-              currency: currency,
-              exchange: exchange,
-              platform: platform,
-              units: units,
-              pricePerUnit: pricePerUnit,
-              fee: fee,
-              date: date,
-            };
-            fetch(endpoint_string, {
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(result),
-            });
-            console.log(JSON.stringify(result));
+        <DatePicker
+          locale="enAU"
+          dateFormat="dd/MM/yyyy"
+          selected={date}
+          onChange={(selectedDate) => {
+            if (selectedDate) setDate(selectedDate);
           }}
-        >
-          Save
+          customInput={<DateInput />}
+        />
+      </DialogContent>
+
+      <DialogActions>
+        <Button disabled={saving} onClick={() => onClose(false)}>
+          Cancel
         </Button>
-        <Button onClick={(e) => {e.stopPropagation(); handleClose()}}>Cancel</Button>
+        <Button disabled={saving} variant="contained" onClick={handleSave}>
+          {saving ? "Saving…" : "Save"}
+        </Button>
       </DialogActions>
     </Dialog>
   );
 }
-
-export default PurchaseModal;

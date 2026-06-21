@@ -11,53 +11,80 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
 type RemoveModalProps = {
-  investment: Pick<Investment, "symbol" | "name">;
+  investment: Pick<Investment, "id" | "symbol" | "name">;
   endpoint: string;
   onClose: (saved: boolean) => void;
 };
 
 function RemoveModal({ investment, endpoint, onClose }: RemoveModalProps) {
-  const [symbol] = useState(investment.symbol);
-  const [name] = useState(investment.name);
-  const endpoint_string = endpoint;
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => {
-    onClose(true);
+  const handleDelete = async () => {
+    if (investment.id === undefined) {
+      setError("This investment does not have a database key.");
+      return;
+    }
+
+    setDeleting(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `${endpoint}/${encodeURIComponent(String(investment.id))}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Delete failed (${response.status})`);
+      }
+
+      onClose(true);
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Unable to delete investment."
+      );
+      setDeleting(false);
+    }
   };
 
   return (
-    <Dialog open onClose={() => handleClose()} maxWidth="sm" fullWidth>
-      <DialogTitle>Remove Investment</DialogTitle>
+    <Dialog
+      open
+      onClose={() => {
+        if (!deleting) onClose(false);
+      }}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>Delete Investment?</DialogTitle>
       <DialogContent dividers>
         <Typography gutterBottom>
-          Are you sure you want to remove <strong>{name} ({symbol})</strong> from Buffetiser?
+          Are you sure you want to permanently delete{" "}
+          <strong>{investment.name} ({investment.symbol})</strong>?
         </Typography>
-        <Typography gutterBottom>
-          The data for {symbol} will be retained but the investment will not be shown.
+        <Typography color="error" gutterBottom>
+          This will also delete every purchase, sale, dividend and price-history
+          record for this investment.
         </Typography>
-        <Typography gutterBottom>
-          You will have to modify the Investment in the DB to show it again.
-        </Typography>
+        <Typography><strong>This action cannot be undone.</strong></Typography>
+        {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
       </DialogContent>
       <DialogActions>
         <Button
           color="error"
           variant="contained"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClose();
-            const result = { symbol: symbol };
-            fetch(endpoint_string, {
-              method: "POST",
-              headers: { Accept: "application/json", "Content-Type": "application/json" },
-              body: JSON.stringify(result),
-            });
-            console.log(JSON.stringify(result));
-          }}
+          disabled={deleting}
+          onClick={handleDelete}
         >
-          REMOVE
+          {deleting ? "Deleting…" : "Delete permanently"}
         </Button>
-        <Button onClick={(e) => {e.stopPropagation(); handleClose()}}>Cancel</Button>
+        <Button disabled={deleting} onClick={() => onClose(false)}>
+          Cancel
+        </Button>
       </DialogActions>
     </Dialog>
   );

@@ -10,39 +10,24 @@ A modern web application scaffold with:
 ## Folder layout
 
 - `backend/` — FastAPI application, models, Alembic, backend Dockerfile
-- `frontend/` — React + TypeScript app, Vite, frontend Dockerfile, ESLint config
-- `infra/` — Docker Compose manifests and Nginx service definitions
+- `frontend/` — React app plus its production Nginx configuration
+- `docker-compose.yml` — PostgreSQL, backend, and frontend services
 - `scripts/` — helper scripts for migrations and database setup
 
-## Local development
+## Run the application
 
-1. Copy `infra/.env.example` to `infra/.env`
-2. Copy `backend/.env.example` to `backend/.env`
-3. Run:
-   - `./install-local.sh`
-4. Start the stack:
-   - `docker compose -f infra/docker-compose.dev.yml up --build`
+1. Copy `backend/.env.example` to `backend/.env`.
+2. Start the stack:
 
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8000/api/v1`
+   ```sh
+   docker compose up --build
+   ```
 
-## Single compose for the whole system
+Open `http://localhost`.
 
-1. Copy `infra/.env.example` to `infra/.env`
-2. Copy `backend/.env.example` to `backend/.env`
-3. Run:
-   - `docker compose up --build`
-
-This root-level `docker-compose.yml` starts PostgreSQL, backend, and Nginx together.
-
-## Production-ready static build flow
-
-1. Copy `infra/.env.example` to `infra/.env`
-2. Copy `backend/.env.example` to `backend/.env`
-3. Run:
-   - `docker compose -f infra/docker-compose.yml up --build`
-
-The frontend is built into static assets by the `infra/nginx` image and served by Nginx on port `80`.
+Nginx serves the frontend on port `80` and proxies `/api/*` requests to the
+internal FastAPI service. Alembic migrations run automatically when the backend
+starts.
 
 ## Alembic migrations
 

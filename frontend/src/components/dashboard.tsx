@@ -4,6 +4,7 @@ import MenuBar from "./menu/menu_bar";
 import InvestmentCard from "./investment_cards/investment_card";
 import TotalsCard from "./totals_card";
 import type { Investment, InvestmentModalConstants } from "./investment_cards/types";
+import logo from "../assets/logo_bk.webp";
 
 
 type InvestmentCardsProps = {
@@ -30,27 +31,54 @@ function InvestmentCards(props: InvestmentCardsProps) {
   );
 }
 
+type EmptyPortfolioProps = {
+  onBuy: () => void;
+};
+
+function EmptyPortfolio({ onBuy }: EmptyPortfolioProps) {
+  return (
+    <main className="empty-portfolio">
+      <div className="empty-portfolio__card">
+        <img
+          className="empty-portfolio__logo"
+          src={logo}
+          alt="Buffetiser"
+        />
+        <button
+          className="empty-portfolio__buy"
+          type="button"
+          onClick={onBuy}
+        >
+          Click Buy to begin
+        </button>
+      </div>
+    </main>
+  );
+}
+
 /*
 Pull all of the required information once and feed it to
 the child components.
 */
 export default function Dashboard() {
-  const [allInvestments, setAllInvestments] = useState<Investment[]>([]);
+  const [allInvestments, setAllInvestments] = useState<Investment[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [constants, setConstants] = useState<InvestmentModalConstants>({});
+  const [buyOpen, setBuyOpen] = useState(false);
 
   useEffect(() => {
     axios
-      .get("api/v1/all")
+      .get("/api/v1/all")
       .then((response) => {
-        // console.log(response.data.all_investment_data);
         setAllInvestments(response.data.all_investment_data);
       })
       .catch((error) => {
         console.log(error.response);
+        setLoadError(true);
       });
 
     axios
-      .get("api/v1/constants")
+      .get("/api/v1/constants")
       .then((response) => {
         setConstants(response.data);
       })
@@ -59,19 +87,40 @@ export default function Dashboard() {
       });
   }, []);
 
-  if (allInvestments.length === 0) {
+  if (loadError) {
+    return <div>Unable to load investments.</div>;
+  }
+
+  if (allInvestments === null) {
     return <div>Loading!</div>;
   }
 
+  const handleBuyClose = (saved: boolean) => {
+    setBuyOpen(false);
+
+    if (saved) {
+      window.location.reload();
+    }
+  };
+
   return (
     <>
-      <MenuBar constants={constants}/>
+      <MenuBar
+        constants={constants}
+        buyOpen={buyOpen}
+        onBuyOpenChange={setBuyOpen}
+        onBuyClose={handleBuyClose}
+      />
 
       <div className="content">
-        <InvestmentCards
-          allInvestments={allInvestments}
-          constants={constants}
-        />
+        {allInvestments.length === 0 ? (
+          <EmptyPortfolio onBuy={() => setBuyOpen(true)} />
+        ) : (
+          <InvestmentCards
+            allInvestments={allInvestments}
+            constants={constants}
+          />
+        )}
       </div>
 
       <footer className="footer">
