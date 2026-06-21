@@ -112,17 +112,19 @@ export default function InvestmentSummary(props: InvestmentSummaryProps) {
       )}
         Sell</button>
       </div>
-      <button className="remove" onClick={() => {
-        setShowRemoveInvestment(true);
-        }}>
-        {showRemoveInvestment && (
-          <RemoveModal
+      <button
+        className="remove"
+        onClick={() => setShowRemoveInvestment(true)}
+      >
+        Remove
+      </button>
+      {showRemoveInvestment && (
+        <RemoveModal
           investment={investment} 
           endpoint={baseURL + "/investments"}
           onClose={handleRemoveInvestmentClose}
-          ></RemoveModal>
-        )}
-        Remove</button>
+        />
+      )}
     </>
   );
 }
