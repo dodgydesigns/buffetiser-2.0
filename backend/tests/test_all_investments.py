@@ -42,6 +42,7 @@ def test_all_investments_returns_computed_dashboard_data(client):
                     investment_key="XASX-ABC",
                     units=2,
                     price_per_unit=10,
+                    realized_profit_per_unit=2,
                     fee=1,
                     date=datetime(2026, 2, 1),
                     trade_count=1,
@@ -93,10 +94,10 @@ def test_all_investments_returns_computed_dashboard_data(client):
                 "daily_change": 0.5,
                 "daily_change_percent": 3.45,
                 "units": 8.0,
-                "average_cost": 7.875,
-                "total_cost": 63.0,
-                "profit": 57.0,
-                "profit_percent": 90.47619047619048,
+                "average_cost": 8.0,
+                "total_cost": 64.0,
+                "profit": 56.0,
+                "profit_percent": 87.5,
                 "history": [
                     {
                         "date": "2026-02-01",

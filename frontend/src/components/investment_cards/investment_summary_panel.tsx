@@ -40,7 +40,10 @@ export default function InvestmentSummary(props: InvestmentSummaryProps) {
     }
   };
   const handleSellInvestmentClose = (isOpen: boolean) => {
-    setShowSellInvestment(isOpen);
+    setShowSellInvestment(false);
+    if (isOpen) {
+      window.location.reload();
+    }
   };
   const handleRemoveInvestmentClose = (isOpen: boolean) => {
     setShowRemoveInvestment(false);
@@ -103,8 +106,8 @@ export default function InvestmentSummary(props: InvestmentSummaryProps) {
         <SaleModal
           investment={investment} 
           constants={constants}
-          endpoint={baseURL + "/sale/"}
-          onClose={() => handleSellInvestmentClose(false)}
+          endpoint={baseURL + "/sale"}
+          onClose={handleSellInvestmentClose}
         ></SaleModal>
       )}
         Sell</button>

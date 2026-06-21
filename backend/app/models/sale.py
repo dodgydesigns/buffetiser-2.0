@@ -19,6 +19,7 @@ class Sale(SQLModel, table=True):
 
     units: float
     price_per_unit: float
+    realized_profit_per_unit: float = 0
     fee: float
     date: datetime
     trade_count: int

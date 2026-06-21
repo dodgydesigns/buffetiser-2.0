@@ -20,9 +20,13 @@ def total_fees(investment: Investment) -> float:
     )
 
 
+def sale_cost_basis_per_unit(sale) -> float:
+    return sale.price_per_unit - sale.realized_profit_per_unit
+
+
 def total_cost_excluding_fees(investment: Investment) -> float:
     cost = sum(p.price_per_unit * p.units for p in investment.purchases)
-    cost -= sum(s.price_per_unit * s.units for s in investment.sales)
+    cost -= sum(sale_cost_basis_per_unit(s) * s.units for s in investment.sales)
     return cost
 
 
@@ -35,7 +39,7 @@ def average_cost_excluding_fees(investment: Investment) -> float:
 
 
 def total_cost(investment: Investment) -> float:
-    return total_cost_excluding_fees(investment) + total_fees(investment)
+    return total_cost_excluding_fees(investment)
 
 
 def average_cost(investment: Investment) -> float:

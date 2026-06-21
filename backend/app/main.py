@@ -11,6 +11,14 @@ from app.core.purchase import (
     PurchaseRead,
     create_purchase,
 )
+from app.core.sale import (
+    DuplicateSaleError,
+    InsufficientUnitsError,
+    InvestmentNotFoundError as SaleInvestmentNotFoundError,
+    SaleCreate,
+    SaleRead,
+    create_sale,
+)
 from app.db.session import get_db
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -86,6 +94,31 @@ def post_purchase(purchase_in: PurchaseCreate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Purchase already exists",
+        ) from exc
+
+
+@api_v1.post(
+    "/sale",
+    response_model=SaleRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def post_sale(sale_in: SaleCreate, db: Session = Depends(get_db)):
+    try:
+        return create_sale(db, sale_in)
+    except SaleInvestmentNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Investment not found",
+        ) from exc
+    except InsufficientUnitsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot sell more than {exc.available_units} available units",
+        ) from exc
+    except DuplicateSaleError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Sale already exists",
         ) from exc
 
 
