@@ -8,6 +8,9 @@ from app.models.investment import Investment
 from app.models.sale import Sale
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import selectinload
+from typing import Any, cast
+from sqlmodel import select
 from sqlmodel import Field, SQLModel
 
 
@@ -50,7 +53,15 @@ class DuplicateSaleError(Exception):
 
 
 def create_sale(db: Session, sale_in: SaleCreate) -> Sale:
-    investment = db.get(Investment, sale_in.investment_key)
+    investment = db.scalar(
+        select(Investment)
+        .where(Investment.key == sale_in.investment_key)
+        .options(
+            selectinload(cast(Any, Investment.purchases)),
+            selectinload(cast(Any, Investment.sales)),
+            selectinload(cast(Any, Investment.dividend_reinvestments)),
+        )
+    )
     if investment is None:
         raise InvestmentNotFoundError
 

@@ -11,10 +11,12 @@ class DividendReinvestment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     investment_key: str = Field(foreign_key="investment.key")
-    investment: Optional["Investment"] = Relationship()
+    investment: Optional["Investment"] = Relationship(
+        back_populates="dividend_reinvestments"
+    )
 
     date: datetime
-    units: int = 0
+    units: float = 0
     price_per_unit: float
 
     __table_args__ = (UniqueConstraint("date", "investment_key"),)
@@ -24,7 +26,9 @@ class DividendPayment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     investment_key: str = Field(foreign_key="investment.key")
-    investment: Optional["Investment"] = Relationship()
+    investment: Optional["Investment"] = Relationship(
+        back_populates="dividend_payments"
+    )
 
     date: datetime
     value: float

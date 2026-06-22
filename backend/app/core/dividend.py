@@ -1,0 +1,101 @@
+from datetime import datetime
+
+from app.models.dividend import DividendPayment, DividendReinvestment
+from app.models.investment import Investment
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+from sqlmodel import Field, SQLModel, col, select
+
+
+class InvestmentNotFoundError(Exception):
+    pass
+
+
+class AmbiguousInvestmentError(Exception):
+    pass
+
+
+class DuplicateReturnError(Exception):
+    pass
+
+
+class DividendPaymentCreate(SQLModel):
+    symbol: str
+    date: datetime
+    value: float = Field(gt=0)
+
+
+class DividendPaymentRead(SQLModel):
+    id: int
+    investment_key: str
+    date: datetime
+    value: float
+
+
+class DividendReinvestmentCreate(SQLModel):
+    symbol: str
+    date: datetime
+    units: float = Field(gt=0)
+    price_per_unit: float = Field(ge=0)
+
+
+class DividendReinvestmentRead(SQLModel):
+    id: int
+    investment_key: str
+    date: datetime
+    units: float
+    price_per_unit: float
+
+
+def _investment_for_symbol(db: Session, symbol: str) -> Investment:
+    investments = db.scalars(
+        select(Investment).where(
+            col(Investment.symbol) == symbol.upper(),
+            col(Investment.visible).is_(True),
+        )
+    ).all()
+    if not investments:
+        raise InvestmentNotFoundError
+    if len(investments) > 1:
+        raise AmbiguousInvestmentError
+    return investments[0]
+
+
+def create_dividend_payment(
+    db: Session,
+    payment_in: DividendPaymentCreate,
+) -> DividendPayment:
+    investment = _investment_for_symbol(db, payment_in.symbol)
+    payment = DividendPayment(
+        investment_key=investment.key,
+        date=payment_in.date,
+        value=payment_in.value,
+    )
+    db.add(payment)
+    _commit_return(db, payment)
+    return payment
+
+
+def create_dividend_reinvestment(
+    db: Session,
+    reinvestment_in: DividendReinvestmentCreate,
+) -> DividendReinvestment:
+    investment = _investment_for_symbol(db, reinvestment_in.symbol)
+    reinvestment = DividendReinvestment(
+        investment_key=investment.key,
+        date=reinvestment_in.date,
+        units=reinvestment_in.units,
+        price_per_unit=reinvestment_in.price_per_unit,
+    )
+    db.add(reinvestment)
+    _commit_return(db, reinvestment)
+    return reinvestment
+
+
+def _commit_return(db: Session, record) -> None:
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise DuplicateReturnError from exc
+    db.refresh(record)

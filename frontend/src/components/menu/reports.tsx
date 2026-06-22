@@ -12,12 +12,14 @@ type Transaction = {
   units?: number;
   fee?: number;
   price_per_unit?: number;
+  realized_profit_per_unit?: number;
   value?: number;
 };
 
 type ReportInvestment = {
   symbol: string;
   name: string;
+  archived?: boolean;
   transactions: Transaction[];
 };
 
@@ -127,7 +129,10 @@ const InvestmentTransactions = () => {
         <h1>Investment Transactions</h1>
         {investments.map((investment, index) => (
             <div key={`investment-${index}`}>
-            <h3>({investment.symbol}) {investment.name}</h3>
+            <h3>
+              ({investment.symbol}) {investment.name}
+              {investment.archived ? " — Archived" : ""}
+            </h3>
             <table>
                 <thead>
                 <tr>

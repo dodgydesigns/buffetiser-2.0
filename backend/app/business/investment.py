@@ -1,4 +1,4 @@
-from app.core.constants import Exchanges, InvestmentType
+from app.core.constants import Exchanges
 from app.models.investment import Investment
 
 
@@ -8,10 +8,10 @@ def generate_key(exchange: Exchanges | str, symbol: str) -> str:
 
 
 def total_units(investment: Investment) -> float:
-    total = sum(p.units for p in investment.purchases) - sum(
-        s.units for s in investment.sales
-    )
-    return int(total) if investment.type == InvestmentType.SHARES else total
+    purchased_units = sum(p.units for p in investment.purchases)
+    reinvested_units = sum(r.units for r in investment.dividend_reinvestments)
+    sold_units = sum(s.units for s in investment.sales)
+    return purchased_units + reinvested_units - sold_units
 
 
 def total_fees(investment: Investment) -> float:
@@ -26,6 +26,9 @@ def sale_cost_basis_per_unit(sale) -> float:
 
 def total_cost_excluding_fees(investment: Investment) -> float:
     cost = sum(p.price_per_unit * p.units for p in investment.purchases)
+    cost += sum(
+        r.price_per_unit * r.units for r in investment.dividend_reinvestments
+    )
     cost -= sum(sale_cost_basis_per_unit(s) * s.units for s in investment.sales)
     return cost
 

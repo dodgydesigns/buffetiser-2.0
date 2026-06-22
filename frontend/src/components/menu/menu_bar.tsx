@@ -130,14 +130,17 @@ export default function BasicMenu({
 
       <NewDividendModal
         open={dividendsOpen}
-        endpoint={baseURL}
+        endpoint={baseURL + "/dividends"}
         onClose={() => setDividendsOpen(false)}
       />
 
       <NewReinvestmentModal
         open={reinvestmentOpen}
-        endpoint={baseURL}
-        onClose={() => setReinvestmentOpen(false)}
+        endpoint={baseURL + "/reinvestments"}
+        onClose={(saved) => {
+          setReinvestmentOpen(false);
+          if (saved) window.location.reload();
+        }}
       />
 
       <Button

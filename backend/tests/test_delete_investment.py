@@ -12,7 +12,7 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine, select
 
 
-def test_delete_investment_removes_investment_and_related_records(client):
+def test_archive_investment_retains_investment_and_related_records(client):
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -66,14 +66,16 @@ def test_delete_investment_removes_investment_and_related_records(client):
 
     app.dependency_overrides[get_db] = override_get_db
     try:
-        response = client.delete("/api/v1/investments/XASX-ABC")
+        response = client.patch("/api/v1/investments/XASX-ABC/archive")
     finally:
         app.dependency_overrides.clear()
 
     assert response.status_code == 204
 
     with Session(engine) as session:
-        assert session.get(Investment, "XASX-ABC") is None
+        investment = session.get(Investment, "XASX-ABC")
+        assert investment is not None
+        assert investment.visible is False
         for model in (
             Purchase,
             Sale,
@@ -82,10 +84,10 @@ def test_delete_investment_removes_investment_and_related_records(client):
             DividendReinvestment,
             DailyChange,
         ):
-            assert session.exec(select(model)).all() == []
+            assert len(session.exec(select(model)).all()) == 1
 
 
-def test_delete_investment_returns_not_found(client):
+def test_archive_investment_returns_not_found(client):
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -99,7 +101,7 @@ def test_delete_investment_returns_not_found(client):
 
     app.dependency_overrides[get_db] = override_get_db
     try:
-        response = client.delete("/api/v1/investments/missing")
+        response = client.patch("/api/v1/investments/missing/archive")
     finally:
         app.dependency_overrides.clear()
 

@@ -8,12 +8,7 @@ from app.business.investment import (
     total_units,
 )
 from app.models.daily_change import DailyChange
-from app.models.dividend import DividendPayment, DividendReinvestment
-from app.models.history import History
 from app.models.investment import Investment
-from app.models.purchase import Purchase
-from app.models.sale import Sale
-from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 from sqlmodel import SQLModel, col, select
 
@@ -62,6 +57,7 @@ def get_all_investments(db: Session) -> AllInvestmentsRead:
             selectinload(cast(Any, Investment.purchases)),
             selectinload(cast(Any, Investment.sales)),
             selectinload(cast(Any, Investment.history)),
+            selectinload(cast(Any, Investment.dividend_reinvestments)),
         )
         .order_by(col(Investment.symbol), col(Investment.key))
     )
@@ -103,38 +99,14 @@ def get_all_investments(db: Session) -> AllInvestmentsRead:
     return AllInvestmentsRead(all_investment_data=summaries)
 
 
-def delete_investment(db: Session, investment_key: str) -> None:
+def archive_investment(db: Session, investment_key: str) -> None:
     investment = db.get(Investment, investment_key)
     if investment is None:
         raise InvestmentNotFoundError
 
-    symbol = investment.symbol
-    dependent_models = (
-        DividendPayment,
-        DividendReinvestment,
-        History,
-        Purchase,
-        Sale,
-    )
-
     try:
-        for model in dependent_models:
-            db.execute(delete(model).where(col(model.investment_key) == investment_key))
-
-        db.delete(investment)
-
-        if symbol:
-            remaining_symbol = db.scalar(
-                select(Investment.key)
-                .where(
-                    col(Investment.symbol) == symbol,
-                    col(Investment.key) != investment_key,
-                )
-                .limit(1)
-            )
-            if remaining_symbol is None:
-                db.execute(delete(DailyChange).where(col(DailyChange.symbol) == symbol))
-
+        investment.visible = False
+        db.add(investment)
         db.commit()
     except Exception:
         db.rollback()
