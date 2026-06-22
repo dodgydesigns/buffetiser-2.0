@@ -4,13 +4,14 @@ import { Alert, Box, CircularProgress } from "@mui/material";
 import TotalsChart from "./totals_chart";
 import TotalsHeader from "./totals_header";
 import SalesProfitDialog from "./sales_profit_dialog";
+import { PORTFOLIO_CHANGED_EVENT } from "../portfolio_events";
 
 export type TotalPortfolioValues = {
   total_cost: number;
   total_value: number;
   total_profit: number;
   total_profit_percentage: number;
-  realized_sales_profit: number;
+  realised_sales_profit: number;
 };
 
 export type PortfolioHistoryPoint = {
@@ -20,7 +21,7 @@ export type PortfolioHistoryPoint = {
   profit: number;
 };
 
-export type RealizedSalePoint = {
+export type RealisedSalePoint = {
   date: string;
   investment_key: string;
   symbol: string;
@@ -32,7 +33,7 @@ export type RealizedSalePoint = {
 type PortfolioResponse = {
   portfolio_totals: TotalPortfolioValues;
   portfolio_history: PortfolioHistoryPoint[];
-  realized_sales: RealizedSalePoint[];
+  realised_sales: RealisedSalePoint[];
 };
 
 export default function TotalsCard() {
@@ -41,13 +42,23 @@ export default function TotalsCard() {
   const [salesOpen, setSalesOpen] = useState(false);
 
   useEffect(() => {
-    axios
+    const loadPortfolio = () => {
+      axios
       .get<PortfolioResponse>("/api/v1/portfolio")
-      .then((response) => setPortfolio(response.data))
+      .then((response) => {
+        setPortfolio(response.data);
+        setError(false);
+      })
       .catch((requestError) => {
         console.error(requestError);
         setError(true);
       });
+    };
+    loadPortfolio();
+    window.addEventListener(PORTFOLIO_CHANGED_EVENT, loadPortfolio);
+    return () => {
+      window.removeEventListener(PORTFOLIO_CHANGED_EVENT, loadPortfolio);
+    };
   }, []);
 
   if (error) {
@@ -89,7 +100,7 @@ export default function TotalsCard() {
       </Box>
       <SalesProfitDialog
         open={salesOpen}
-        sales={portfolio.realized_sales}
+        sales={portfolio.realised_sales}
         onClose={() => setSalesOpen(false)}
       />
     </Box>

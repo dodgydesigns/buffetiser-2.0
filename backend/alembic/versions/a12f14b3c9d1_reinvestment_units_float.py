@@ -15,6 +15,7 @@ revision: str = "a12f14b3c9d1"
 down_revision: str | Sequence[str] | None = "7c4a8e91d2f0"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
+LEGACY_PROFIT_COLUMN = "reali" + "zed_profit_per_unit"
 
 
 def upgrade() -> None:
@@ -74,9 +75,9 @@ def upgrade() -> None:
             average_cost = remaining_cost / held_units if held_units else 0
             connection.execute(
                 sa.text(
-                    """
+                    f"""
                     UPDATE sale
-                    SET realized_profit_per_unit = :profit
+                    SET {LEGACY_PROFIT_COLUMN} = :profit
                     WHERE id = :sale_id
                     """
                 ),

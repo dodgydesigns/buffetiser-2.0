@@ -50,15 +50,23 @@ def _daily_changes_by_symbol(db: Session) -> dict[str, DailyChange]:
     return {change.symbol: change for change in changes}
 
 
-def get_all_investments(db: Session) -> AllInvestmentsRead:
+def get_all_investments(
+    db: Session,
+    *,
+    include_history: bool = True,
+) -> AllInvestmentsRead:
+    options = [
+        selectinload(cast(Any, Investment.purchases)),
+        selectinload(cast(Any, Investment.sales)),
+        selectinload(cast(Any, Investment.dividend_reinvestments)),
+    ]
+    if include_history:
+        options.append(selectinload(cast(Any, Investment.history)))
+
     statement = (
         select(Investment)
-        .options(
-            selectinload(cast(Any, Investment.purchases)),
-            selectinload(cast(Any, Investment.sales)),
-            selectinload(cast(Any, Investment.history)),
-            selectinload(cast(Any, Investment.dividend_reinvestments)),
-        )
+        .where(col(Investment.visible).is_(True))
+        .options(*options)
         .order_by(col(Investment.symbol), col(Investment.key))
     )
     investments = db.scalars(statement).all()
@@ -76,7 +84,7 @@ def get_all_investments(db: Session) -> AllInvestmentsRead:
                 volume=point.volume,
             )
             for point in sorted(investment.history, key=lambda point: point.date)
-        ]
+        ] if include_history else []
 
         summaries.append(
             InvestmentSummaryRead(
@@ -97,6 +105,29 @@ def get_all_investments(db: Session) -> AllInvestmentsRead:
         )
 
     return AllInvestmentsRead(all_investment_data=summaries)
+
+
+def get_investment_history(
+    db: Session,
+    investment_key: str,
+) -> list[InvestmentHistoryRead]:
+    investment = db.scalar(
+        select(Investment)
+        .where(col(Investment.key) == investment_key)
+        .options(selectinload(cast(Any, Investment.history)))
+    )
+    if investment is None:
+        raise InvestmentNotFoundError
+    return [
+        InvestmentHistoryRead(
+            date=point.date.date().isoformat(),
+            low=point.low,
+            high=point.high,
+            close=point.close,
+            volume=point.volume,
+        )
+        for point in sorted(investment.history, key=lambda point: point.date)
+    ]
 
 
 def archive_investment(db: Session, investment_key: str) -> None:

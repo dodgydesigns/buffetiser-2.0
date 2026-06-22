@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from app.business.ledger import recalculate_sales
 from app.models.dividend import DividendPayment, DividendReinvestment
 from app.models.investment import Investment
 from sqlalchemy.exc import IntegrityError
@@ -88,7 +89,14 @@ def create_dividend_reinvestment(
         price_per_unit=reinvestment_in.price_per_unit,
     )
     db.add(reinvestment)
-    _commit_return(db, reinvestment)
+    try:
+        db.flush()
+        recalculate_sales(db, investment.key)
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise DuplicateReturnError from exc
+    db.refresh(reinvestment)
     return reinvestment
 
 

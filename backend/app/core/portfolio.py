@@ -15,7 +15,7 @@ class PortfolioTotalsRead(SQLModel):
     total_value: float
     total_profit: float
     total_profit_percentage: float
-    realized_sales_profit: float
+    realised_sales_profit: float
 
 
 class PortfolioHistoryPointRead(SQLModel):
@@ -25,7 +25,7 @@ class PortfolioHistoryPointRead(SQLModel):
     profit: float
 
 
-class RealizedSalePointRead(SQLModel):
+class RealisedSalePointRead(SQLModel):
     date: str
     investment_key: str
     symbol: str
@@ -37,7 +37,7 @@ class RealizedSalePointRead(SQLModel):
 class PortfolioRead(SQLModel):
     portfolio_totals: PortfolioTotalsRead
     portfolio_history: list[PortfolioHistoryPointRead]
-    realized_sales: list[RealizedSalePointRead]
+    realised_sales: list[RealisedSalePointRead]
 
 
 @dataclass
@@ -95,7 +95,7 @@ def _transactions(investment: Investment) -> list[tuple[date, str, float, float]
             _day(sale.date),
             "sale",
             sale.units,
-            sale.price_per_unit - sale.realized_profit_per_unit,
+            sale.price_per_unit - sale.realised_profit_per_unit,
         )
         for sale in investment.sales
     )
@@ -212,7 +212,7 @@ def _portfolio_history(
     return history
 
 
-def _realized_sales(investments: list[Investment]) -> list[RealizedSalePointRead]:
+def _realised_sales(investments: list[Investment]) -> list[RealisedSalePointRead]:
     sales: list[tuple[datetime, Investment, Any]] = sorted(
         (
             (sale.date, investment, sale)
@@ -224,10 +224,10 @@ def _realized_sales(investments: list[Investment]) -> list[RealizedSalePointRead
     result = []
     cumulative = 0.0
     for sale_date, investment, sale in sales:
-        profit = sale.realized_profit_per_unit * sale.units - sale.fee
+        profit = sale.realised_profit_per_unit * sale.units - sale.fee
         cumulative += profit
         result.append(
-            RealizedSalePointRead(
+            RealisedSalePointRead(
                 date=sale_date.date().isoformat(),
                 investment_key=investment.key,
                 symbol=investment.symbol or investment.key,
@@ -244,7 +244,7 @@ def get_portfolio(db: Session, *, today: date | None = None) -> PortfolioRead:
     cost = sum(total_cost(investment) for investment in investments)
     value = sum(total_value(investment) for investment in investments)
     profit = sum(total_profit(investment) for investment in investments)
-    realized_sales = _realized_sales(_investments_with_sales(db))
+    realised_sales = _realised_sales(_investments_with_sales(db))
 
     return PortfolioRead(
         portfolio_totals=PortfolioTotalsRead(
@@ -252,13 +252,13 @@ def get_portfolio(db: Session, *, today: date | None = None) -> PortfolioRead:
             total_value=value,
             total_profit=profit,
             total_profit_percentage=profit / cost * 100 if cost else 0,
-            realized_sales_profit=(
-                realized_sales[-1].cumulative_profit if realized_sales else 0
+            realised_sales_profit=(
+                realised_sales[-1].cumulative_profit if realised_sales else 0
             ),
         ),
         portfolio_history=_portfolio_history(
             investments,
             end_date=today or date.today(),
         ),
-        realized_sales=realized_sales,
+        realised_sales=realised_sales,
     )

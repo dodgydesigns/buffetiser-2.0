@@ -15,6 +15,7 @@ import type { Investment, InvestmentModalConstants } from "./types";
 import PurchaseModal from "./purchase_modal";
 import SaleModal from "./sale_modal";
 import RemoveModal from "./remove_modal";
+import { notifyPortfolioChanged } from "../../portfolio_events";
 
 const baseURL = "/api/v1";
 
@@ -36,19 +37,19 @@ export default function InvestmentSummary(props: InvestmentSummaryProps) {
   const handleBuyInvestmentClose = (isOpen: boolean) => {
     setShowBuyInvestment(false);
     if (isOpen) {
-      window.location.reload();
+      notifyPortfolioChanged();
     }
   };
   const handleSellInvestmentClose = (isOpen: boolean) => {
     setShowSellInvestment(false);
     if (isOpen) {
-      window.location.reload();
+      notifyPortfolioChanged();
     }
   };
   const handleRemoveInvestmentClose = (isOpen: boolean) => {
     setShowRemoveInvestment(false);
     if (isOpen) {
-      window.location.reload();
+      notifyPortfolioChanged();
     }
   };
 

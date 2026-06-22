@@ -1,7 +1,17 @@
 import logging
+import os
+import shutil
+import tempfile
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.core.constants import get_constants
+from app.core.database_backup import (
+    DatabaseBackupError,
+    create_database_backup,
+    database_write_dependency,
+    restore_database_backup,
+)
 from app.core.dividend import (
     AmbiguousInvestmentError,
     DividendPaymentCreate,
@@ -15,7 +25,12 @@ from app.core.dividend import (
 )
 from app.core.investment import AllInvestmentsRead
 from app.core.investment import InvestmentNotFoundError as InvestmentDeleteNotFoundError
-from app.core.investment import archive_investment, get_all_investments
+from app.core.investment import (
+    InvestmentHistoryRead,
+    archive_investment,
+    get_all_investments,
+    get_investment_history,
+)
 from app.core.purchase import (
     DuplicatePurchaseError,
     InvestmentNotFoundError,
@@ -42,12 +57,24 @@ from app.core.scheduler import (
 )
 from app.db.session import get_db
 from app.models.investment import Investment
-from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 # from app.api.v1.main import api_router
 _logger = logging.getLogger(__name__)
+MAX_BACKUP_UPLOAD_BYTES = 100 * 1024 * 1024
 
 
 @asynccontextmanager
@@ -66,8 +93,15 @@ app = FastAPI(title="Buffetiser API", lifespan=lifespan)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins - adjust for production
-    allow_credentials=True,
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv(
+            "ALLOWED_ORIGINS",
+            "http://localhost,http://127.0.0.1",
+        ).split(",")
+        if origin.strip()
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -75,20 +109,49 @@ app.add_middleware(
 api_v1 = APIRouter(prefix="/api/v1")
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @api_v1.get("/all", response_model=AllInvestmentsRead)
-def all_investments(db: Session = Depends(get_db)):
+def all_investments(
+    include_history: bool = True,
+    db: Session = Depends(get_db),
+):
     """
     Return the investment summaries and price history required by the dashboard.
     """
     _logger.info("All investments endpoint hit")
-    return get_all_investments(db)
+    return get_all_investments(db, include_history=include_history)
+
+
+@api_v1.get(
+    "/investments/{investment_key}/history",
+    response_model=list[InvestmentHistoryRead],
+)
+def investment_history(
+    investment_key: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        return get_investment_history(db, investment_key)
+    except InvestmentDeleteNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Investment not found",
+        ) from exc
 
 
 @api_v1.patch(
     "/investments/{investment_key}/archive",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-def remove_investment(investment_key: str, db: Session = Depends(get_db)):
+def remove_investment(
+    investment_key: str,
+    db: Session = Depends(get_db),
+    _guard=Depends(database_write_dependency),
+):
     try:
         archive_investment(db, investment_key)
     except InvestmentDeleteNotFoundError as exc:
@@ -111,12 +174,73 @@ def constants():
     return {"constants": get_constants()}
 
 
+def _remove_backup(path: Path) -> None:
+    shutil.rmtree(path.parent, ignore_errors=True)
+
+
+@api_v1.post("/backup_db/")
+def backup_database(
+    background_tasks: BackgroundTasks,
+    _guard=Depends(database_write_dependency),
+):
+    try:
+        path, filename = create_database_backup()
+    except DatabaseBackupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
+
+    background_tasks.add_task(_remove_backup, path)
+    return FileResponse(
+        path,
+        filename=filename,
+        media_type="application/octet-stream",
+        background=background_tasks,
+    )
+
+
+@api_v1.post("/restore_db/")
+def restore_database(
+    backup: UploadFile,
+    _guard=Depends(database_write_dependency),
+):
+    suffix = Path(backup.filename or "backup.dump").suffix or ".dump"
+    with tempfile.TemporaryDirectory(prefix="buffetiser-upload-") as directory:
+        path = Path(directory) / f"uploaded-backup{suffix}"
+        try:
+            with path.open("wb") as destination:
+                total_bytes = 0
+                while chunk := backup.file.read(1024 * 1024):
+                    total_bytes += len(chunk)
+                    if total_bytes > MAX_BACKUP_UPLOAD_BYTES:
+                        raise HTTPException(
+                            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                            detail="Backup files must be 100 MB or smaller",
+                        )
+                    destination.write(chunk)
+            restore_database_backup(path)
+        except DatabaseBackupError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=str(exc),
+            ) from exc
+        finally:
+            backup.file.close()
+
+    return {"message": "Database restored successfully"}
+
+
 @api_v1.post(
     "/purchase",
     response_model=PurchaseRead,
     status_code=status.HTTP_201_CREATED,
 )
-def post_purchase(purchase_in: PurchaseCreate, db: Session = Depends(get_db)):
+def post_purchase(
+    purchase_in: PurchaseCreate,
+    db: Session = Depends(get_db),
+    _guard=Depends(database_write_dependency),
+):
     try:
         purchase = create_purchase(db, purchase_in)
         investment = purchase.investment or db.get(Investment, purchase.investment_key)
@@ -143,14 +267,17 @@ def post_purchase(purchase_in: PurchaseCreate, db: Session = Depends(get_db)):
 
 
 @api_v1.post("/update_all/")
-def update_prices(db: Session = Depends(get_db)):
+def update_prices(
+    db: Session = Depends(get_db),
+    _guard=Depends(database_write_dependency),
+):
     """Update active investments with their latest Yahoo daily prices."""
     return update_all_prices(db)
 
 
 @api_v1.get("/portfolio", response_model=PortfolioRead)
 def portfolio(db: Session = Depends(get_db)):
-    """Return one year of daily portfolio totals and realized sale profits."""
+    """Return one year of daily portfolio totals and realised sale profits."""
     return get_portfolio(db)
 
 
@@ -167,6 +294,7 @@ def get_cron_time(db: Session = Depends(get_db)):
 def set_cron_time(
     update_time: str = Body(...),
     db: Session = Depends(get_db),
+    _guard=Depends(database_write_dependency),
 ):
     try:
         configuration = save_update_time(db, update_time)
@@ -189,7 +317,11 @@ def set_cron_time(
     response_model=SaleRead,
     status_code=status.HTTP_201_CREATED,
 )
-def post_sale(sale_in: SaleCreate, db: Session = Depends(get_db)):
+def post_sale(
+    sale_in: SaleCreate,
+    db: Session = Depends(get_db),
+    _guard=Depends(database_write_dependency),
+):
     try:
         return create_sale(db, sale_in)
     except SaleInvestmentNotFoundError as exc:
@@ -217,6 +349,7 @@ def post_sale(sale_in: SaleCreate, db: Session = Depends(get_db)):
 def post_dividend(
     payment_in: DividendPaymentCreate,
     db: Session = Depends(get_db),
+    _guard=Depends(database_write_dependency),
 ):
     try:
         return create_dividend_payment(db, payment_in)
@@ -245,6 +378,7 @@ def post_dividend(
 def post_reinvestment(
     reinvestment_in: DividendReinvestmentCreate,
     db: Session = Depends(get_db),
+    _guard=Depends(database_write_dependency),
 ):
     try:
         return create_dividend_reinvestment(db, reinvestment_in)

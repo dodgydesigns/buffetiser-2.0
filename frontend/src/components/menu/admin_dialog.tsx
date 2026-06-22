@@ -29,6 +29,21 @@ type Feedback = {
   message: string;
 } | null;
 
+type SaveFilePickerWindow = Window & {
+  showSaveFilePicker?: (options: {
+    suggestedName: string;
+    types: {
+      description: string;
+      accept: Record<string, string[]>;
+    }[];
+  }) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: Blob) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
+
 export default function AdminDialog({
   open,
   baseURL,
@@ -38,6 +53,9 @@ export default function AdminDialog({
   const [loadingTime, setLoadingTime] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const supportsSavePicker =
+    typeof window !== "undefined" &&
+    typeof (window as SaveFilePickerWindow).showSaveFilePicker === "function";
 
   useEffect(() => {
     if (!open) return;
@@ -100,6 +118,121 @@ export default function AdminDialog({
         severity: "error",
         message:
           error instanceof Error ? error.message : "Something went wrong.",
+      });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function downloadBackup() {
+    if (
+      !supportsSavePicker &&
+      !window.confirm(
+        "This browser cannot show a Save As location picker. The backup will " +
+          "use your browser's configured download folder. Continue?"
+      )
+    ) {
+      return;
+    }
+
+    setPendingAction("backup");
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`${baseURL}/backup_db/`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || `Backup failed (${response.status})`);
+      }
+
+      const disposition = response.headers.get("Content-Disposition") ?? "";
+      const filename =
+        disposition.match(/filename="?([^"]+)"?/)?.[1] ??
+        "buffetiser-backup.dump";
+      const backup = await response.blob();
+      const saveFilePicker = (window as SaveFilePickerWindow).showSaveFilePicker;
+
+      if (saveFilePicker) {
+        const handle = await saveFilePicker({
+          suggestedName: filename,
+          types: [
+            {
+              description: "PostgreSQL database backup",
+              accept: {
+                "application/octet-stream": [".dump", ".backup"],
+              },
+            },
+          ],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(backup);
+        await writable.close();
+      } else {
+        const url = URL.createObjectURL(backup);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      setFeedback({
+        severity: "success",
+        message: `Database backup saved as ${filename}.`,
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setFeedback({
+          severity: "error",
+          message: "Backup save was cancelled.",
+        });
+        return;
+      }
+      setFeedback({
+        severity: "error",
+        message: error instanceof Error ? error.message : "Backup failed.",
+      });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function restoreBackup(file: File) {
+    if (
+      !window.confirm(
+        `Restore ${file.name}? This will replace the current database.`
+      )
+    ) {
+      return;
+    }
+
+    setPendingAction("restore");
+    setFeedback(null);
+    const formData = new FormData();
+    formData.append("backup", file);
+
+    try {
+      const response = await fetch(`${baseURL}/restore_db/`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || `Restore failed (${response.status})`);
+      }
+      setFeedback({
+        severity: "success",
+        message: "Database restored successfully. Reloading…",
+      });
+      window.setTimeout(() => window.location.reload(), 900);
+    } catch (error) {
+      setFeedback({
+        severity: "error",
+        message: error instanceof Error ? error.message : "Restore failed.",
       });
     } finally {
       setPendingAction(null);
@@ -179,16 +312,18 @@ export default function AdminDialog({
           <AdminCard
             icon={<BackupRoundedIcon />}
             title="Back up"
-            description="Create a safe copy of the current database."
+            description={
+              supportsSavePicker
+                ? "Create a database backup and choose where to save it."
+                : "Download a database backup using your browser's download settings."
+            }
           >
             <ActionButton
               busy={pendingAction === "backup"}
               disabled={isBusy}
-              onClick={() =>
-                post("backup", "/backup_db/", "Database backup completed.")
-              }
+              onClick={downloadBackup}
             >
-              Back up now
+              {supportsSavePicker ? "Choose location" : "Download backup"}
             </ActionButton>
           </AdminCard>
 
@@ -211,14 +346,11 @@ export default function AdminDialog({
               <input
                 hidden
                 type="file"
+                accept=".dump,.backup,.bak,application/octet-stream"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (!file) return;
-                  void post(
-                    "restore",
-                    `/restore_db/${encodeURIComponent(file.name)}/`,
-                    "Database restored successfully."
-                  );
+                  void restoreBackup(file);
                   event.target.value = "";
                 }}
               />

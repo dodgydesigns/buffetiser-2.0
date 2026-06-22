@@ -152,6 +152,9 @@ cython_debug/
 
 # Buffetiser files
 /stuff/*
+docs/imports/backups/
+*.dump
+*.backup
 
 # Dependencies
 /node_modules
@@ -178,3 +181,4 @@ yarn-error.log*
 
 # Node
 frontend/node_modules
+frontend/dist/

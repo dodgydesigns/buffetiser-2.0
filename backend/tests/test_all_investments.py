@@ -42,7 +42,7 @@ def test_all_investments_returns_computed_dashboard_data(client):
                     investment_key="XASX-ABC",
                     units=2,
                     price_per_unit=10,
-                    realized_profit_per_unit=2,
+                    realised_profit_per_unit=2,
                     fee=1,
                     date=datetime(2026, 2, 1),
                     trade_count=1,
@@ -139,3 +139,38 @@ def test_all_investments_handles_an_empty_database(client):
 
     assert response.status_code == 200
     assert response.json() == {"all_investment_data": []}
+
+
+def test_all_investments_can_omit_history(client):
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+    with Session(engine) as session:
+        session.add(Investment(key="XASX-ABC", symbol="ABC"))
+        session.add(
+            History(
+                investment_key="XASX-ABC",
+                date=datetime(2026, 1, 1),
+                close=1,
+            )
+        )
+        session.commit()
+
+    def override_get_db():
+        with Session(engine) as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        response = client.get("/api/v1/all?include_history=false")
+        history_response = client.get(
+            "/api/v1/investments/XASX-ABC/history"
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.json()["all_investment_data"][0]["history"] == []
+    assert history_response.json()[0]["close"] == 1

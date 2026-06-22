@@ -21,7 +21,7 @@ def total_fees(investment: Investment) -> float:
 
 
 def sale_cost_basis_per_unit(sale) -> float:
-    return sale.price_per_unit - sale.realized_profit_per_unit
+    return sale.price_per_unit - sale.realised_profit_per_unit
 
 
 def total_cost_excluding_fees(investment: Investment) -> float:

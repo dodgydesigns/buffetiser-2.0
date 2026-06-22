@@ -12,6 +12,7 @@ from app.core.dividend import (
 )
 from app.models.investment import Investment
 from app.models.purchase import Purchase
+from app.models.sale import Sale
 from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel, Session, create_engine
 
@@ -116,3 +117,30 @@ def test_duplicate_dividend_is_rejected(dividend_session):
     create_dividend_payment(dividend_session, payment)
     with pytest.raises(DuplicateReturnError):
         create_dividend_payment(dividend_session, payment)
+
+
+def test_backdated_reinvestment_recalculates_later_sale(dividend_session):
+    sale = Sale(
+        investment_key="XASX-ABC",
+        units=5,
+        price_per_unit=10,
+        realised_profit_per_unit=5,
+        fee=0,
+        date=datetime(2026, 3, 1),
+        trade_count=1,
+    )
+    dividend_session.add(sale)
+    dividend_session.commit()
+
+    create_dividend_reinvestment(
+        dividend_session,
+        DividendReinvestmentCreate(
+            symbol="ABC",
+            date=datetime(2026, 2, 1),
+            units=10,
+            price_per_unit=7,
+        ),
+    )
+
+    dividend_session.refresh(sale)
+    assert sale.realised_profit_per_unit == 4

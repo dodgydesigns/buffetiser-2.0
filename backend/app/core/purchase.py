@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from app.business.ledger import recalculate_sales
 from app.business.investment import generate_key
 from app.core.constants import Exchanges, Platforms
 from app.models.investment import Investment
@@ -54,20 +55,19 @@ def create_purchase(db: Session, purchase_in: PurchaseCreate) -> Purchase:
 
     investment_key = generate_key(
         exchange=exchange_value,
-        symbol=purchase_in.symbol,
+        symbol=purchase_in.symbol.upper(),
     )
 
     investment = db.scalar(select(Investment).where(Investment.key == investment_key))
 
     if investment is None:
         investment = Investment(
-            symbol=purchase_in.symbol,
+            symbol=purchase_in.symbol.upper(),
             key=investment_key,
             name=purchase_in.name or purchase_in.symbol,
         )
         db.add(investment)
-        db.commit()
-        db.refresh(investment)
+        db.flush()
 
     purchase_data = purchase_in.model_dump()
 
@@ -83,6 +83,8 @@ def create_purchase(db: Session, purchase_in: PurchaseCreate) -> Purchase:
     db.add(purchase)
 
     try:
+        db.flush()
+        recalculate_sales(db, investment.key)
         db.commit()
     except IntegrityError as exc:
         db.rollback()

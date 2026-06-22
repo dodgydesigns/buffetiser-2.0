@@ -48,7 +48,7 @@ def test_portfolio_history_applies_purchases_sales_and_reinvestments():
                     investment_key="XASX-ABC",
                     units=3,
                     price_per_unit=12,
-                    realized_profit_per_unit=6.5,
+                    realised_profit_per_unit=6.5,
                     fee=1,
                     date=datetime(2026, 6, 20),
                     trade_count=1,
@@ -86,8 +86,8 @@ def test_portfolio_history_applies_purchases_sales_and_reinvestments():
 
     assert portfolio.portfolio_totals.total_cost == pytest.approx(49.5)
     assert portfolio.portfolio_totals.total_value == 135
-    assert portfolio.realized_sales[0].profit == pytest.approx(18.5)
-    assert portfolio.portfolio_totals.realized_sales_profit == pytest.approx(18.5)
+    assert portfolio.realised_sales[0].profit == pytest.approx(18.5)
+    assert portfolio.portfolio_totals.realised_sales_profit == pytest.approx(18.5)
 
 
 def test_portfolio_excludes_archived_investments():
@@ -112,7 +112,7 @@ def test_portfolio_excludes_archived_investments():
                 investment_key="XASX-OLD",
                 units=2,
                 price_per_unit=20,
-                realized_profit_per_unit=5,
+                realised_profit_per_unit=5,
                 fee=1,
                 date=datetime(2026, 5, 1),
                 trade_count=1,
@@ -123,5 +123,5 @@ def test_portfolio_excludes_archived_investments():
 
     assert portfolio.portfolio_totals.total_value == 0
     assert portfolio.portfolio_totals.total_cost == 0
-    assert portfolio.portfolio_totals.realized_sales_profit == 9
-    assert portfolio.realized_sales[0].symbol == "OLD"
+    assert portfolio.portfolio_totals.realised_sales_profit == 9
+    assert portfolio.realised_sales[0].symbol == "OLD"

@@ -8,6 +8,7 @@ import NewPurchaseModal from "../investment_cards/purchase_modal_new";
 import { InvestmentModalConstants } from "../investment_cards/types";
 import NewDividendModal from "./new_dividend_modal";
 import NewReinvestmentModal from "./new_reinvestment_modal";
+import { notifyPortfolioChanged } from "../../portfolio_events";
 interface BasicMenuProps {
   constants?: InvestmentModalConstants | undefined;
   buyOpen: boolean;
@@ -139,7 +140,7 @@ export default function BasicMenu({
         endpoint={baseURL + "/reinvestments"}
         onClose={(saved) => {
           setReinvestmentOpen(false);
-          if (saved) window.location.reload();
+          if (saved) notifyPortfolioChanged();
         }}
       />
 

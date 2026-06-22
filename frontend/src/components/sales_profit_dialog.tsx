@@ -18,11 +18,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { RealizedSalePoint } from "./totals_card";
+import type { RealisedSalePoint } from "./totals_card";
 
 type SalesProfitDialogProps = {
   open: boolean;
-  sales: RealizedSalePoint[];
+  sales: RealisedSalePoint[];
   onClose: () => void;
 };
 
@@ -41,7 +41,7 @@ export default function SalesProfitDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ pb: 0.5, fontWeight: 800 }}>
-        Realized profit from share sales
+        Realised profit from share sales
       </DialogTitle>
       <DialogContent>
         <Typography color="text.secondary" sx={{ mb: 2 }}>
@@ -91,7 +91,7 @@ export default function SalesProfitDialog({
                 <YAxis tickFormatter={(value) => `$${Number(value).toFixed(0)}`} />
                 <Tooltip
                   labelFormatter={(_, payload) => {
-                    const sale = payload?.[0]?.payload as RealizedSalePoint | undefined;
+                    const sale = payload?.[0]?.payload as RealisedSalePoint | undefined;
                     return sale
                       ? `${sale.symbol} · ${sale.units} units · ${sale.date}`
                       : "";

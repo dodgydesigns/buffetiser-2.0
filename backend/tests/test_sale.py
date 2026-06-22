@@ -58,7 +58,7 @@ def test_create_sale_reduces_available_units(sale_session):
 
     assert sale.investment_key == "XASX-ABC"
     assert sale.units == 4
-    assert sale.realized_profit_per_unit == 3
+    assert sale.realised_profit_per_unit == 3
 
     investment = sale_session.get(Investment, "XASX-ABC")
     assert investment is not None
@@ -111,3 +111,38 @@ def test_create_sale_rejects_duplicate(sale_session):
 
     with pytest.raises(DuplicateSaleError):
         create_sale(sale_session, sale_input())
+
+
+def test_backdated_purchase_recalculates_later_sale(sale_session):
+    sale = create_sale(sale_session, sale_input())
+    assert sale.realised_profit_per_unit == 3
+
+    from app.core.purchase import PurchaseCreate, create_purchase
+
+    create_purchase(
+        sale_session,
+        PurchaseCreate(
+            symbol="ABC",
+            units=10,
+            price_per_unit=7,
+            fee=0,
+            date=datetime(2026, 1, 15),
+            trade_count=1,
+        ),
+    )
+
+    sale_session.refresh(sale)
+    assert sale.realised_profit_per_unit == 2
+
+
+def test_backdated_sale_uses_units_available_on_sale_date(sale_session):
+    with pytest.raises(InsufficientUnitsError) as error:
+        create_sale(
+            sale_session,
+            sale_input(
+                units=11,
+                date=datetime(2025, 12, 31),
+            ),
+        )
+
+    assert error.value.available_units == 0

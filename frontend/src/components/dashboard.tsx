@@ -5,6 +5,10 @@ import InvestmentCard from "./investment_cards/investment_card";
 import TotalsCard from "./totals_card";
 import type { Investment, InvestmentModalConstants } from "./investment_cards/types";
 import logo from "../assets/logo_bk.webp";
+import {
+  notifyPortfolioChanged,
+  PORTFOLIO_CHANGED_EVENT,
+} from "../portfolio_events";
 
 
 type InvestmentCardsProps = {
@@ -67,15 +71,20 @@ export default function Dashboard() {
   const [buyOpen, setBuyOpen] = useState(false);
 
   useEffect(() => {
-    axios
-      .get("/api/v1/all")
+    const loadInvestments = () => {
+      axios
+      .get("/api/v1/all?include_history=false")
       .then((response) => {
         setAllInvestments(response.data.all_investment_data);
+        setLoadError(false);
       })
       .catch((error) => {
         console.log(error.response);
         setLoadError(true);
       });
+    };
+    loadInvestments();
+    window.addEventListener(PORTFOLIO_CHANGED_EVENT, loadInvestments);
 
     axios
       .get("/api/v1/constants")
@@ -85,6 +94,9 @@ export default function Dashboard() {
       .catch((error) => {
         console.log(error.response);
       });
+    return () => {
+      window.removeEventListener(PORTFOLIO_CHANGED_EVENT, loadInvestments);
+    };
   }, []);
 
   if (loadError) {
@@ -99,7 +111,7 @@ export default function Dashboard() {
     setBuyOpen(false);
 
     if (saved) {
-      window.location.reload();
+      notifyPortfolioChanged();
     }
   };
 

@@ -91,7 +91,7 @@ export default function TotalsHeader({
           value={`$${totalPortfolioValues.total_value.toFixed(2)}`}
         />
         <Metric
-          label="Unrealized profit"
+          label="Unrealised profit"
           value={`$${totalPortfolioValues.total_profit.toFixed(2)}`}
           colour={profitColour}
         />

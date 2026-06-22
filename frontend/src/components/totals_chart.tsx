@@ -80,9 +80,9 @@ export default function TotalsChart({
         <Line
           type="monotone"
           dataKey="total"
-          stroke="#f5e642"
+          stroke="#10ac80"
           strokeWidth={2.5}
-          dot={showDots ? { r: 5, fill: "#f5e642" } : false}
+          dot={showDots ? { r: 5, fill: "#10ac80" } : false}
           activeDot={{ r: 5 }}
         />
         <Line

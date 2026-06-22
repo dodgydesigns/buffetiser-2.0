@@ -41,7 +41,7 @@ def test_reports_include_archived_investments_and_transactions(client):
                     investment_key="XASX-ABC",
                     units=2,
                     price_per_unit=8,
-                    realized_profit_per_unit=3,
+                    realised_profit_per_unit=3,
                     fee=1,
                     date=datetime(2026, 2, 1),
                     trade_count=1,
@@ -80,3 +80,51 @@ def test_reports_include_archived_investments_and_transactions(client):
         "dividend",
         "reinvestment",
     ]
+
+
+def test_reports_sort_dates_chronologically_across_years(client):
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+    with Session(engine) as session:
+        session.add(Investment(key="XASX-ABC", symbol="ABC"))
+        session.add_all(
+            [
+                Purchase(
+                    investment_key="XASX-ABC",
+                    units=1,
+                    price_per_unit=1,
+                    fee=0,
+                    date=datetime(2025, 12, 31),
+                    trade_count=1,
+                ),
+                Purchase(
+                    investment_key="XASX-ABC",
+                    units=1,
+                    price_per_unit=1,
+                    fee=0,
+                    date=datetime(2026, 1, 1),
+                    trade_count=1,
+                ),
+            ]
+        )
+        session.commit()
+
+    def override_get_db():
+        with Session(engine) as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        response = client.get("/api/v1/reports/")
+    finally:
+        app.dependency_overrides.clear()
+
+    dates = [
+        transaction["date"]
+        for transaction in response.json()["XASX-ABC"]["transactions"]
+    ]
+    assert dates == ["31/12/2025", "01/01/2026"]

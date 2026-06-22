@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.core.price import update_all_prices
+from app.core.database_backup import database_write_guard
 from app.db.session import SessionLocal
 from app.models.configuration import Configuration
 from sqlalchemy.orm import Session
@@ -93,8 +94,9 @@ def _load_schedule() -> tuple[str, str]:
 
 
 def _run_price_update() -> dict:
-    with SessionLocal() as db:
-        return update_all_prices(db)
+    with database_write_guard():
+        with SessionLocal() as db:
+            return update_all_prices(db)
 
 
 class DailyPriceScheduler:

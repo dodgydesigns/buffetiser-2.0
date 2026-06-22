@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
 import InvestmentCharts from "./investment_charts";
 import InvestmentSummary from "./investment_summary_panel";
 import type { Investment, InvestmentModalConstants } from "./types";
@@ -20,6 +21,40 @@ This component holds all the details of an Investment:
 */
 function InvestmentCard({ constants, ...investment }: InvestmentCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [history, setHistory] = useState(investment.history);
+  const [historyLoaded, setHistoryLoaded] = useState(
+    investment.history.length > 0
+  );
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const toggleOpen = async () => {
+    const opening = !isOpen;
+    setIsOpen(opening);
+    if (
+      opening &&
+      !historyLoaded &&
+      !historyLoading &&
+      investment.id !== undefined
+    ) {
+      setHistoryLoading(true);
+      try {
+        const response = await fetch(
+          `/api/v1/investments/${encodeURIComponent(
+            String(investment.id)
+          )}/history`
+        );
+        if (!response.ok) {
+          throw new Error(`History request failed (${response.status})`);
+        }
+        setHistory(await response.json());
+        setHistoryLoaded(true);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setHistoryLoading(false);
+      }
+    }
+  };
 
   return (
     <div key={investment.symbol}>
@@ -27,7 +62,7 @@ function InvestmentCard({ constants, ...investment }: InvestmentCardProps) {
           Click to show/hide the chart and summary panel */}
       <table className="card_header">
         <tbody>
-          <tr onClick={() => setIsOpen((open) => !open)}>
+          <tr onClick={toggleOpen}>
             <td>
               <table>
                 <tbody>
@@ -95,7 +130,11 @@ function InvestmentCard({ constants, ...investment }: InvestmentCardProps) {
                 <div className="investment_summary">
                   {/* The chart showing the price/volume history */}
                   <div className="chart">
-                    <InvestmentCharts investment_history={investment.history} />
+                    {historyLoading ? (
+                      <CircularProgress sx={{ m: 4 }} />
+                    ) : (
+                      <InvestmentCharts investment_history={history} />
+                    )}
                   </div>
                   {/* The panel on the RHS with details of the investment and the buttons */}
                   <div className="summary">

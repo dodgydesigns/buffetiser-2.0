@@ -12,7 +12,7 @@ type Transaction = {
   units?: number;
   fee?: number;
   price_per_unit?: number;
-  realized_profit_per_unit?: number;
+  realised_profit_per_unit?: number;
   value?: number;
 };
 

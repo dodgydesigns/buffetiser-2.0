@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from app.business.investment import average_cost_excluding_fees, total_units
+from app.business.ledger import (
+    InsufficientUnitsAtDateError,
+    recalculate_sales,
+)
 from app.core.constants import Exchanges
 from app.models.investment import Investment
 from app.models.sale import Sale
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import selectinload
-from typing import Any, cast
 from sqlmodel import select
 from sqlmodel import Field, SQLModel
 
@@ -32,7 +33,7 @@ class SaleRead(SQLModel):
     exchange: Exchanges
     units: float
     price_per_unit: float
-    realized_profit_per_unit: float
+    realised_profit_per_unit: float
     fee: float
     date: datetime
     trade_count: int
@@ -54,32 +55,24 @@ class DuplicateSaleError(Exception):
 
 def create_sale(db: Session, sale_in: SaleCreate) -> Sale:
     investment = db.scalar(
-        select(Investment)
-        .where(Investment.key == sale_in.investment_key)
-        .options(
-            selectinload(cast(Any, Investment.purchases)),
-            selectinload(cast(Any, Investment.sales)),
-            selectinload(cast(Any, Investment.dividend_reinvestments)),
-        )
+        select(Investment).where(Investment.key == sale_in.investment_key)
     )
     if investment is None:
         raise InvestmentNotFoundError
 
-    available_units = total_units(investment)
-    if sale_in.units > available_units:
-        raise InsufficientUnitsError(available_units)
-
-    realized_profit_per_unit = (
-        sale_in.price_per_unit - average_cost_excluding_fees(investment)
-    )
     sale = Sale(
         **sale_in.model_dump(),
-        realized_profit_per_unit=realized_profit_per_unit,
+        realised_profit_per_unit=0,
     )
     db.add(sale)
 
     try:
+        db.flush()
+        recalculate_sales(db, investment.key)
         db.commit()
+    except InsufficientUnitsAtDateError as exc:
+        db.rollback()
+        raise InsufficientUnitsError(exc.available_units) from exc
     except IntegrityError as exc:
         db.rollback()
         raise DuplicateSaleError from exc
