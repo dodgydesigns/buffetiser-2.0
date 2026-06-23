@@ -12,6 +12,8 @@ import { notifyPortfolioChanged } from "../../portfolio_events";
 import { useAuth } from "../../auth";
 import AccountDialog from "./account_dialog";
 import NewUserDialog from "./new_user_dialog";
+
+const HelpDialog = React.lazy(() => import("./help_dialog"));
 interface BasicMenuProps {
   constants?: InvestmentModalConstants | undefined;
   buyOpen: boolean;
@@ -29,6 +31,7 @@ export default function BasicMenu({
   const { user, logout } = useAuth();
   const [accountOpen, setAccountOpen] = React.useState(false);
   const [newUserOpen, setNewUserOpen] = React.useState(false);
+  const [helpOpen, setHelpOpen] = React.useState(false);
 
   const baseURL = "/api/v1";
   const id = React.useId();
@@ -172,6 +175,13 @@ export default function BasicMenu({
         Report
       </Button>
 
+      <Button
+        style={{ color: "white", backgroundColor: "transparent" }}
+        onClick={() => setHelpOpen(true)}
+      >
+        Help
+      </Button>
+
       <span style={{ float: "right" }}>
         <Button
           style={{ color: "white", backgroundColor: "transparent" }}
@@ -191,6 +201,12 @@ export default function BasicMenu({
         open={accountOpen}
         onClose={() => setAccountOpen(false)}
       />
+
+      {helpOpen && (
+        <React.Suspense fallback={null}>
+          <HelpDialog open onClose={() => setHelpOpen(false)} />
+        </React.Suspense>
+      )}
     </div>
   );
 }

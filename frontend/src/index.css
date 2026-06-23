@@ -268,6 +268,103 @@ Buttons in the menubar.
   transform: translateY(-1px);
 }
 
+.help-readme {
+  max-width: 58rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  color: #263f50;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.help-readme > p:first-child {
+  margin-top: 0;
+}
+
+.help-readme h1,
+.help-readme h2,
+.help-readme h3 {
+  color: #143449;
+  line-height: 1.25;
+}
+
+.help-readme h2 {
+  margin-top: 2.5rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 2px solid #d8e7f0;
+}
+
+.help-readme h3 {
+  margin-top: 1.8rem;
+}
+
+.help-readme img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  border-radius: 1rem;
+}
+
+.help-readme a {
+  color: #0f6195;
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.help-readme blockquote {
+  margin: 1.5rem 0;
+  padding: 0.8rem 1.1rem;
+  background: #eaf3f8;
+  border-left: 4px solid #3282b8;
+  border-radius: 0 0.6rem 0.6rem 0;
+}
+
+.help-readme pre {
+  overflow-x: auto;
+  padding: 1rem;
+  color: #eaf3f8;
+  background: #102b3d;
+  border-radius: 0.75rem;
+}
+
+.help-readme code {
+  padding: 0.12rem 0.3rem;
+  background: #e8f0f5;
+  border-radius: 0.3rem;
+  font-size: 0.92em;
+}
+
+.help-readme pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.help-readme table {
+  width: 100%;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #cadde8;
+  border-radius: 0.7rem;
+}
+
+.help-readme th,
+.help-readme td {
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid #d8e7f0;
+  text-align: left;
+}
+
+.help-readme th {
+  color: white;
+  background: #0f4c75;
+}
+
+.help-readme tr:last-child td {
+  border-bottom: 0;
+}
+
 /* Each investment card with header, chart and summary. */
 .investment_cards_container {
   height: 100%;
