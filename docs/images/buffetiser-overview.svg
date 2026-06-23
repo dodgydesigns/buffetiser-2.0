@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">Buffetiser feature overview</title>
+  <desc id="desc">An illustrated Buffetiser dashboard with investment cards, performance charts and portfolio totals.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0b2638"/>
+      <stop offset=".55" stop-color="#143449"/>
+      <stop offset="1" stop-color="#0f4c75"/>
+    </linearGradient>
+    <linearGradient id="chart" x1="0" x2="1">
+      <stop offset="0" stop-color="#6fa7cd"/>
+      <stop offset="1" stop-color="#82ca9d"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#061722" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="430" rx="28" fill="url(#bg)"/>
+  <circle cx="1090" cy="40" r="190" fill="#3282b8" opacity=".16"/>
+  <circle cx="70" cy="415" r="170" fill="#3282b8" opacity=".12"/>
+  <g font-family="Arial, sans-serif" fill="#fff">
+    <text x="60" y="68" font-size="31" font-weight="700">Your portfolio, clearly understood</text>
+    <text x="60" y="101" font-size="17" fill="#adcde2">Private holdings, transaction history and performance in one self-hosted dashboard.</text>
+  </g>
+  <g transform="translate(60 137)" filter="url(#shadow)">
+    <rect width="700" height="235" rx="18" fill="#f8fbfd"/>
+    <rect width="700" height="42" rx="18" fill="#143449"/>
+    <rect y="25" width="700" height="17" fill="#143449"/>
+    <g font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#fff">
+      <text x="20" y="27">CONFIG</text><text x="103" y="27">BUY</text><text x="160" y="27">RETURNS</text><text x="252" y="27">REPORT</text>
+    </g>
+    <g transform="translate(16 58)">
+      <rect width="668" height="42" rx="8" fill="#163599"/>
+      <text x="16" y="27" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#fff">VAS</text>
+      <text x="82" y="27" font-family="Arial, sans-serif" font-size="15" fill="#fff">Australian Shares ETF</text>
+      <text x="548" y="27" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#82ca9d">+12.4%</text>
+    </g>
+    <g transform="translate(16 108)">
+      <rect width="455" height="105" rx="10" fill="#eaf3f8"/>
+      <path d="M18 84 C70 72 92 80 139 55 S226 70 268 38 S346 48 437 17" fill="none" stroke="url(#chart)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M18 92 H437 M18 63 H437 M18 34 H437" stroke="#c9dce8" stroke-width="1"/>
+    </g>
+    <g transform="translate(486 108)" font-family="Arial, sans-serif">
+      <rect width="198" height="105" rx="10" fill="#0f4c75"/>
+      <text x="16" y="27" font-size="12" fill="#adcde2">CURRENT VALUE</text>
+      <text x="16" y="56" font-size="24" font-weight="700" fill="#fff">$42,680</text>
+      <text x="16" y="82" font-size="13" fill="#82ca9d">+$6,240 total profit</text>
+    </g>
+  </g>
+  <g transform="translate(800 137)" font-family="Arial, sans-serif">
+    <g filter="url(#shadow)">
+      <rect width="340" height="68" rx="14" fill="#fff"/>
+      <circle cx="40" cy="34" r="21" fill="#e5f2f9"/>
+      <path d="M28 38 L37 29 L44 35 L54 23" fill="none" stroke="#3282b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="78" y="29" font-size="14" font-weight="700" fill="#143449">Automatic market prices</text>
+      <text x="78" y="49" font-size="12" fill="#587080">Daily history and latest closes</text>
+    </g>
+    <g transform="translate(0 83)" filter="url(#shadow)">
+      <rect width="340" height="68" rx="14" fill="#fff"/>
+      <circle cx="40" cy="34" r="21" fill="#e9f7ef"/>
+      <path d="M31 34 l6 6 13-15" fill="none" stroke="#399263" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="78" y="29" font-size="14" font-weight="700" fill="#143449">Accurate cost accounting</text>
+      <text x="78" y="49" font-size="12" fill="#587080">Purchases, sales and reinvestments</text>
+    </g>
+    <g transform="translate(0 166)" filter="url(#shadow)">
+      <rect width="340" height="68" rx="14" fill="#fff"/>
+      <circle cx="40" cy="34" r="21" fill="#f1ecfb"/>
+      <path d="M32 35 v-7 a8 8 0 0 1 16 0 v7 M29 34 h22 v16 h-22z" fill="none" stroke="#7256a8" stroke-width="3"/>
+      <text x="78" y="29" font-size="14" font-weight="700" fill="#143449">Private multi-user portfolios</text>
+      <text x="78" y="49" font-size="12" fill="#587080">Securely isolated account data</text>
+    </g>
+  </g>
+</svg>

@@ -37,7 +37,7 @@ Open `http://NAS-IP:8080`. On first launch, Buffetiser asks you to create the
 administrator. If a database was migrated from an older installation, all
 existing investments are assigned to this first account.
 
-Additional accounts are created under **Config → Administrator → Accounts**.
+Additional accounts are created under **Config → New User**.
 Each account can only read or change its own portfolio.
 
 ## Move an existing portfolio
