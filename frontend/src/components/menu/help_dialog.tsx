@@ -61,7 +61,10 @@ export default function HelpDialog({
       slotProps={{
         paper: {
           sx: {
-            height: fullScreen ? "100%" : "min(92vh, 960px)",
+            width: fullScreen ? "100%" : "95vw",
+            maxWidth: fullScreen ? "100%" : "95vw",
+            height: fullScreen ? "100%" : "95vh",
+            maxHeight: fullScreen ? "100%" : "95vh",
             borderRadius: fullScreen ? 0 : 3,
             overflow: "hidden",
           },

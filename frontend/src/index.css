@@ -38,6 +38,7 @@
 }
 :root {
   --BLACK: #000000;
+  --FONT_SANS: Arial, Helvetica, "Segoe UI", sans-serif;
 }
 
 /*
@@ -51,9 +52,30 @@ body,
   margin: 0;
 }
 
+html,
+body,
+#root,
+button,
+input,
+select,
+textarea,
+.MuiTypography-root,
+.MuiButton-root,
+.MuiInputBase-root,
+.MuiFormLabel-root,
+.MuiMenuItem-root,
+.recharts-wrapper {
+  font-family: var(--FONT_SANS) !important;
+}
+
 body {
-  font-family: "Arial";
   background-color: var(--COLOUR2);
+}
+
+button,
+.MuiButton-root,
+.MuiIconButton-root {
+  border-radius: 10px !important;
 }
 
 .dashboard-page {
@@ -532,7 +554,7 @@ The popup modals.
   border-color: #fff;
   border-width: 0.5px;
   text-align: center;
-  font-family: "Arial";
+  font-family: var(--FONT_SANS);
   cursor: "arrow";
   z-index: 20;
 }

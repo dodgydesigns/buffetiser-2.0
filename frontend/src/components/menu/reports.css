@@ -1,11 +1,11 @@
 .reports {
-    max-width: 1000px;
+    max-width: 1160px;
     margin: 2rem auto;
     padding: 1.5rem;
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--FONT_SANS);
   }
   
   .reports h1 {

@@ -23,8 +23,13 @@ type ReportInvestment = {
   transactions: Transaction[];
 };
 
-type SortColumn = "date" | "type" | "units" | "price" | "fee";
+type SortColumn = "date" | "type" | "units" | "price" | "fee" | "total";
 type SortOrder = "asc" | "desc";
+
+const currency = new Intl.NumberFormat("en-AU", {
+  style: "currency",
+  currency: "AUD",
+});
 
 const InvestmentTransactions = () => {
   const [investments, setInvestments] = useState<ReportInvestment[]>([]);
@@ -52,12 +57,30 @@ const InvestmentTransactions = () => {
   }
 
   function getPrice(transaction: Transaction) {
-    if (transaction.price_per_unit) {
+    if (transaction.price_per_unit !== undefined) {
       return transaction.price_per_unit.toFixed(2);
-    } else if (transaction.value) {
+    } else if (transaction.value !== undefined) {
       return transaction.value.toFixed(2);
     }
     return "-";
+  }
+
+  function getTransactionTotal(transaction: Transaction) {
+    if (
+      transaction.units !== undefined &&
+      transaction.price_per_unit !== undefined
+    ) {
+      return (
+        transaction.units * transaction.price_per_unit +
+        (transaction.fee ?? 0)
+      );
+    }
+    return transaction.value;
+  }
+
+  function formatTransactionTotal(transaction: Transaction) {
+    const total = getTransactionTotal(transaction);
+    return total === undefined ? "-" : currency.format(total);
   }
 
   const sortTransactions = (transactions: Transaction[]) => {
@@ -87,6 +110,10 @@ const InvestmentTransactions = () => {
         case "fee":
           valA = getFee(a);
           valB = getFee(b);
+          break;
+        case "total":
+          valA = getTransactionTotal(a) ?? Number.NEGATIVE_INFINITY;
+          valB = getTransactionTotal(b) ?? Number.NEGATIVE_INFINITY;
           break;
         default:
           return 0;
@@ -151,6 +178,10 @@ const InvestmentTransactions = () => {
                     <th onClick={() => handleSort("fee")}>
                       Fee {sortColumn === "fee" && (sortOrder === "asc" ? "↓" : "↑")}
                     </th>
+                    <th onClick={() => handleSort("total")}>
+                      Transaction total{" "}
+                      {sortColumn === "total" && (sortOrder === "asc" ? "↓" : "↑")}
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
@@ -161,6 +192,7 @@ const InvestmentTransactions = () => {
                     <td>{getUnits(transaction)}</td>
                     <td>{getPrice(transaction)}</td>
                     <td>{getFee(transaction)}</td>
+                    <td>{formatTransactionTotal(transaction)}</td>
                     </tr>
                 ))}
                 </tbody>
