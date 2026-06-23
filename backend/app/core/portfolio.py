@@ -51,10 +51,13 @@ def _day(value: datetime) -> date:
     return value.date()
 
 
-def _active_investments(db: Session) -> list[Investment]:
+def _active_investments(db: Session, owner_id: int) -> list[Investment]:
     statement = (
         select(Investment)
-        .where(Investment.visible.is_(True))
+        .where(
+            Investment.owner_id == owner_id,
+            Investment.visible.is_(True),
+        )
         .options(
             selectinload(cast(Any, Investment.purchases)),
             selectinload(cast(Any, Investment.sales)),
@@ -66,10 +69,11 @@ def _active_investments(db: Session) -> list[Investment]:
     return list(db.scalars(statement).all())
 
 
-def _investments_with_sales(db: Session) -> list[Investment]:
+def _investments_with_sales(db: Session, owner_id: int) -> list[Investment]:
     return list(
         db.scalars(
             select(Investment)
+            .where(Investment.owner_id == owner_id)
             .options(selectinload(cast(Any, Investment.sales)))
             .order_by(col(Investment.key))
         ).all()
@@ -239,12 +243,17 @@ def _realised_sales(investments: list[Investment]) -> list[RealisedSalePointRead
     return result
 
 
-def get_portfolio(db: Session, *, today: date | None = None) -> PortfolioRead:
-    investments = _active_investments(db)
+def get_portfolio(
+    db: Session,
+    owner_id: int = 1,
+    *,
+    today: date | None = None,
+) -> PortfolioRead:
+    investments = _active_investments(db, owner_id)
     cost = sum(total_cost(investment) for investment in investments)
     value = sum(total_value(investment) for investment in investments)
     profit = sum(total_profit(investment) for investment in investments)
-    realised_sales = _realised_sales(_investments_with_sales(db))
+    realised_sales = _realised_sales(_investments_with_sales(db, owner_id))
 
     return PortfolioRead(
         portfolio_totals=PortfolioTotalsRead(

@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: buffetiser_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-buffetiser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-BUFFETISER_DB}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-buffetiser} -d ${POSTGRES_DB:-BUFFETISER_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - buffetiser_db_data:/var/lib/postgresql/data
+    networks:
+      - buffetiser
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: buffetiser_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-buffetiser}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-BUFFETISER_DB}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SESSION_DAYS: ${SESSION_DAYS:-30}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - buffetiser
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: buffetiser_frontend
+    restart: unless-stopped
+    ports:
+      - "${BUFFETISER_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - buffetiser
+
+volumes:
+  buffetiser_db_data:
+    name: buffetiser_db_data
+
+networks:
+  buffetiser:
+    name: buffetiser_network
+    driver: bridge

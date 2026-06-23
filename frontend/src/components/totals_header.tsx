@@ -107,10 +107,11 @@ export default function TotalsHeader({
         startIcon={<ShowChartRoundedIcon />}
         onClick={onShowSales}
         sx={{
+          borderRadius: "10px",
           flexShrink: 0,
-          color: "#143449",
-          backgroundColor: "white",
-          "&:hover": { backgroundColor: "#e8f3fa" },
+          color: "#ffffff",
+          backgroundColor: "#143449",
+          "&:hover": { backgroundColor: "#0f4c75" },
         }}
       >
         Sales profit

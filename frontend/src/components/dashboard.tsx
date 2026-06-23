@@ -100,11 +100,15 @@ export default function Dashboard() {
   }, []);
 
   if (loadError) {
-    return <div>Unable to load investments.</div>;
+    return (
+      <main className="dashboard-status">
+        Unable to load investments.
+      </main>
+    );
   }
 
   if (allInvestments === null) {
-    return <div>Loading!</div>;
+    return <main className="dashboard-status">Loading!</main>;
   }
 
   const handleBuyClose = (saved: boolean) => {
@@ -116,7 +120,7 @@ export default function Dashboard() {
   };
 
   return (
-    <>
+    <div className="dashboard-page">
       <MenuBar
         constants={constants}
         buyOpen={buyOpen}
@@ -138,6 +142,6 @@ export default function Dashboard() {
       <footer className="footer">
         <TotalsCard />
       </footer>
-    </>
+    </div>
   );
 }

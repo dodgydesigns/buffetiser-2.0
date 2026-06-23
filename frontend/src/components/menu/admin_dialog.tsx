@@ -14,7 +14,6 @@ import {
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import BackupRoundedIcon from "@mui/icons-material/BackupRounded";
 import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
-import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 
@@ -65,13 +64,13 @@ export default function AdminDialog({
 
     async function getData() {
       try {
-        const response = await fetch(`${baseURL}/cron_time/`);
-        if (!response.ok) {
+        const scheduleResponse = await fetch(`${baseURL}/cron_time/`);
+        if (!scheduleResponse.ok) {
           throw new Error(
-            `Failed to fetch update time (${response.status})`
+            `Failed to fetch update time (${scheduleResponse.status})`
           );
         }
-        const json = await response.json();
+        const json = await scheduleResponse.json();
         setCronTime(json.cron_time ?? "");
       } catch (error) {
         setFeedback({
@@ -303,7 +302,7 @@ export default function AdminDialog({
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
             gap: 2,
             mt: 1,
             mb: 3,
@@ -357,30 +356,16 @@ export default function AdminDialog({
             </Button>
           </AdminCard>
 
-          <AdminCard
-            icon={<AutoAwesomeRoundedIcon />}
-            title="Fixtures"
-            description="Generate sample data for development and testing."
-          >
-            <ActionButton
-              busy={pendingAction === "fixtures"}
-              disabled={isBusy}
-              onClick={() =>
-                post(
-                  "fixtures",
-                  "/generate_fixtures/",
-                  "Fixtures generated successfully."
-                )
-              }
-            >
-              Generate
-            </ActionButton>
-          </AdminCard>
         </Box>
 
         <Typography
           variant="overline"
-          sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1.2 }}
+          sx={{
+            mt: 3,
+            color: "text.secondary",
+            fontWeight: 700,
+            letterSpacing: 1.2,
+          }}
         >
           Market data
         </Typography>

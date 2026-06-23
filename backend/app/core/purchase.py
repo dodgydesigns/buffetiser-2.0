@@ -46,28 +46,49 @@ class DuplicatePurchaseError(Exception):
     pass
 
 
-def create_purchase(db: Session, purchase_in: PurchaseCreate) -> Purchase:
+def create_purchase(
+    db: Session,
+    purchase_in: PurchaseCreate,
+    owner_id: int = 1,
+) -> Purchase:
     exchange_value = (
         purchase_in.exchange.value
         if isinstance(purchase_in.exchange, Exchanges)
         else purchase_in.exchange
     )
 
-    investment_key = generate_key(
-        exchange=exchange_value,
-        symbol=purchase_in.symbol.upper(),
+    investment = db.scalar(
+        select(Investment).where(
+            Investment.owner_id == owner_id,
+            Investment.exchange == exchange_value,
+            Investment.symbol == purchase_in.symbol.upper(),
+        )
     )
 
-    investment = db.scalar(select(Investment).where(Investment.key == investment_key))
-
     if investment is None:
+        base_key = generate_key(
+            exchange=exchange_value,
+            symbol=purchase_in.symbol.upper(),
+        )
+        investment_key = base_key
+        if db.get(Investment, investment_key) is not None:
+            investment_key = generate_key(
+                exchange=exchange_value,
+                symbol=purchase_in.symbol.upper(),
+                owner_id=owner_id,
+            )
         investment = Investment(
+            owner_id=owner_id,
             symbol=purchase_in.symbol.upper(),
             key=investment_key,
             name=purchase_in.name or purchase_in.symbol,
+            exchange=exchange_value,
         )
         db.add(investment)
         db.flush()
+    elif not investment.visible:
+        investment.visible = True
+        db.add(investment)
 
     purchase_data = purchase_in.model_dump()
 

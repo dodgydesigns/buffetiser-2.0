@@ -53,9 +53,16 @@ class DuplicateSaleError(Exception):
     pass
 
 
-def create_sale(db: Session, sale_in: SaleCreate) -> Sale:
+def create_sale(
+    db: Session,
+    sale_in: SaleCreate,
+    owner_id: int = 1,
+) -> Sale:
     investment = db.scalar(
-        select(Investment).where(Investment.key == sale_in.investment_key)
+        select(Investment).where(
+            Investment.key == sale_in.investment_key,
+            Investment.owner_id == owner_id,
+        )
     )
     if investment is None:
         raise InvestmentNotFoundError

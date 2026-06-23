@@ -2,9 +2,15 @@ from app.core.constants import Exchanges
 from app.models.investment import Investment
 
 
-def generate_key(exchange: Exchanges | str, symbol: str) -> str:
+def generate_key(
+    exchange: Exchanges | str,
+    symbol: str,
+    *,
+    owner_id: int | None = None,
+) -> str:
     exchange_value = exchange.value if isinstance(exchange, Exchanges) else exchange
-    return f"{exchange_value}-{symbol}"
+    base_key = f"{exchange_value}-{symbol}"
+    return f"u{owner_id}-{base_key}" if owner_id is not None else base_key
 
 
 def total_units(investment: Investment) -> float:

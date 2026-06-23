@@ -43,23 +43,141 @@
 /*
 Style for the whole site
 */
-html {
-  height: 50%;
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
 }
+
 body {
   font-family: "Arial";
-  width: 99%;
-  flex: 2;
-  display: flex;
-  flex-direction: column;
   background-color: var(--COLOUR2);
 }
+
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .content {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.footer {
+  flex: 0 0 auto;
+}
+
+.dashboard-status {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  color: var(--WHITE);
+  font-size: 1.25rem;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 2rem;
+  color: var(--WHITE);
+  background:
+    radial-gradient(circle at top right, rgb(50 130 184 / 80%), transparent 42%),
+    linear-gradient(145deg, #0b2638, #143449 55%, #0f4c75);
+}
+
+.auth-card {
+  display: flex;
+  flex-direction: column;
+  width: min(26rem, 100%);
+  box-sizing: border-box;
+  padding: 2rem;
+  color: #143449;
+  background: rgb(255 255 255 / 96%);
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 1.5rem;
+  box-shadow: 0 2rem 5rem rgb(0 0 0 / 30%);
+}
+
+.auth-logo {
+  width: min(17rem, 80%);
+  margin: 0 auto 1rem;
+  border-radius: 1rem;
+}
+
+.auth-card h1 {
+  margin: 0.5rem 0 0;
+  text-align: center;
+}
+
+.auth-card p {
+  margin: 0.6rem 0 1.5rem;
+  color: #506675;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.auth-card label {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.auth-card input {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #adcde2;
+  border-radius: 0.7rem;
+  font: inherit;
+}
+
+.auth-card input:focus {
+  outline: 3px solid rgb(50 130 184 / 25%);
+  border-color: #3282b8;
+}
+
+.auth-card button {
+  margin-top: 0.5rem;
+  padding: 0.85rem;
+  color: white;
+  background: #0f4c75;
+  border: 0;
+  border-radius: 0.8rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-card button:hover {
+  background: #163599;
+}
+
+.auth-card button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.auth-error {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  color: #8b1010;
+  background: #ffe3e3;
+  border-radius: 0.6rem;
 }
 
 .empty-portfolio {
-  min-height: calc(100vh - 5rem);
+  height: 100%;
   display: grid;
   place-items: center;
   padding: 2rem;
@@ -136,10 +254,24 @@ Buttons in the menubar.
   background-color: var(--COLOUR1);
 }
 
+.menu-bar .MuiButton-root {
+  border-radius: 0.65rem;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.menu-bar .MuiButton-root:hover {
+  background-color: rgb(255 255 255 / 10%);
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 14%);
+  transform: translateY(-1px);
+}
+
 /* Each investment card with header, chart and summary. */
 .investment_cards_container {
-  height: 40rem;
-  overflow-y: scroll;
+  height: 100%;
+  overflow-y: auto;
   z-index: 0;
 }
 

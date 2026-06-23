@@ -9,9 +9,13 @@ def _format_date(value) -> str:
     return value.strftime("%d/%m/%Y")
 
 
-def get_investment_reports(db: Session) -> dict[str, dict]:
+def get_investment_reports(
+    db: Session,
+    owner_id: int = 1,
+) -> dict[str, dict]:
     investments = db.scalars(
         select(Investment)
+        .where(Investment.owner_id == owner_id)
         .options(
             selectinload(cast(Any, Investment.purchases)),
             selectinload(cast(Any, Investment.sales)),

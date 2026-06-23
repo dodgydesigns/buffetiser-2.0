@@ -48,10 +48,15 @@ class DividendReinvestmentRead(SQLModel):
     price_per_unit: float
 
 
-def _investment_for_symbol(db: Session, symbol: str) -> Investment:
+def _investment_for_symbol(
+    db: Session,
+    symbol: str,
+    owner_id: int,
+) -> Investment:
     investments = db.scalars(
         select(Investment).where(
             col(Investment.symbol) == symbol.upper(),
+            col(Investment.owner_id) == owner_id,
             col(Investment.visible).is_(True),
         )
     ).all()
@@ -65,8 +70,9 @@ def _investment_for_symbol(db: Session, symbol: str) -> Investment:
 def create_dividend_payment(
     db: Session,
     payment_in: DividendPaymentCreate,
+    owner_id: int = 1,
 ) -> DividendPayment:
-    investment = _investment_for_symbol(db, payment_in.symbol)
+    investment = _investment_for_symbol(db, payment_in.symbol, owner_id)
     payment = DividendPayment(
         investment_key=investment.key,
         date=payment_in.date,
@@ -80,8 +86,9 @@ def create_dividend_payment(
 def create_dividend_reinvestment(
     db: Session,
     reinvestment_in: DividendReinvestmentCreate,
+    owner_id: int = 1,
 ) -> DividendReinvestment:
-    investment = _investment_for_symbol(db, reinvestment_in.symbol)
+    investment = _investment_for_symbol(db, reinvestment_in.symbol, owner_id)
     reinvestment = DividendReinvestment(
         investment_key=investment.key,
         date=reinvestment_in.date,

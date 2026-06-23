@@ -9,6 +9,9 @@ import { InvestmentModalConstants } from "../investment_cards/types";
 import NewDividendModal from "./new_dividend_modal";
 import NewReinvestmentModal from "./new_reinvestment_modal";
 import { notifyPortfolioChanged } from "../../portfolio_events";
+import { useAuth } from "../../auth";
+import AccountDialog from "./account_dialog";
+import NewUserDialog from "./new_user_dialog";
 interface BasicMenuProps {
   constants?: InvestmentModalConstants | undefined;
   buyOpen: boolean;
@@ -23,6 +26,9 @@ export default function BasicMenu({
   onBuyClose,
 }: BasicMenuProps) {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [accountOpen, setAccountOpen] = React.useState(false);
+  const [newUserOpen, setNewUserOpen] = React.useState(false);
 
   const baseURL = "/api/v1";
   const id = React.useId();
@@ -37,6 +43,10 @@ export default function BasicMenu({
   };
   const handleShowConfig = () => {
     setConfigOpen(true);
+    handleConfigClose();
+  };
+  const handleShowNewUser = () => {
+    setNewUserOpen(true);
     handleConfigClose();
   };
   const handleConfigClose = () => {
@@ -66,25 +76,30 @@ export default function BasicMenu({
   };
 
   return (
-    <div>
-      <Button
-        style={{ color: "white", backgroundColor: "transparent" }}
-        id={configButtonId}
-        aria-controls={configMenuOpen ? configMenuId : undefined}
-        aria-haspopup="true"
-        aria-expanded={configMenuOpen ? "true" : undefined}
-        onClick={handleConfigClick}
-      >
-        Config
-      </Button>
-      <Menu
-        id={configMenuId}
-        anchorEl={configAnchorEl}
-        open={configMenuOpen}
-        onClose={handleConfigClose}
-      >
-        <MenuItem onClick={handleShowConfig}>Administrator</MenuItem>
-      </Menu>
+    <div className="menu-bar">
+      {user.is_admin && (
+        <>
+          <Button
+            style={{ color: "white", backgroundColor: "transparent" }}
+            id={configButtonId}
+            aria-controls={configMenuOpen ? configMenuId : undefined}
+            aria-haspopup="true"
+            aria-expanded={configMenuOpen ? "true" : undefined}
+            onClick={handleConfigClick}
+          >
+            Config
+          </Button>
+          <Menu
+            id={configMenuId}
+            anchorEl={configAnchorEl}
+            open={configMenuOpen}
+            onClose={handleConfigClose}
+          >
+            <MenuItem onClick={handleShowConfig}>Administrator</MenuItem>
+            <MenuItem onClick={handleShowNewUser}>New User</MenuItem>
+          </Menu>
+        </>
+      )}
       
       <Button
         style={{ color: "white", backgroundColor: "transparent" }}
@@ -129,6 +144,12 @@ export default function BasicMenu({
         onClose={() => setConfigOpen(false)}
       />
 
+      <NewUserDialog
+        open={newUserOpen}
+        baseURL={baseURL}
+        onClose={() => setNewUserOpen(false)}
+      />
+
       <NewDividendModal
         open={dividendsOpen}
         endpoint={baseURL + "/dividends"}
@@ -150,6 +171,26 @@ export default function BasicMenu({
       >
         Report
       </Button>
+
+      <span style={{ float: "right" }}>
+        <Button
+          style={{ color: "white", backgroundColor: "transparent" }}
+          onClick={() => setAccountOpen(true)}
+        >
+          {user.display_name}
+        </Button>
+        <Button
+          style={{ color: "white", backgroundColor: "transparent" }}
+          onClick={() => void logout()}
+        >
+          Sign out
+        </Button>
+      </span>
+
+      <AccountDialog
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+      />
     </div>
   );
 }

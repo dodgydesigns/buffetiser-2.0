@@ -6,6 +6,24 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from app.core.constants import get_constants
+from app.core.auth import (
+    Credentials,
+    PasswordChange,
+    SetupStatus,
+    UserCreate,
+    UserRead,
+    authenticate,
+    change_password,
+    complete_setup,
+    create_user,
+    current_admin,
+    current_user,
+    end_session,
+    list_users,
+    setup_required,
+    start_session,
+    user_read,
+)
 from app.core.database_backup import (
     DatabaseBackupError,
     create_database_backup,
@@ -57,6 +75,7 @@ from app.core.scheduler import (
 )
 from app.db.session import get_db
 from app.models.investment import Investment
+from app.models.user import User
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -66,6 +85,7 @@ from fastapi import (
     HTTPException,
     Response,
     UploadFile,
+    Cookie,
     status,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,7 +121,7 @@ app.add_middleware(
         ).split(",")
         if origin.strip()
     ],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -114,16 +134,94 @@ def health():
     return {"status": "ok"}
 
 
+@api_v1.get("/auth/status", response_model=SetupStatus)
+def auth_status(db: Session = Depends(get_db)):
+    return SetupStatus(setup_required=setup_required(db))
+
+
+@api_v1.post("/auth/setup", response_model=UserRead)
+def auth_setup(
+    user_in: UserCreate,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    user = complete_setup(db, user_in)
+    start_session(db, response, user)
+    return user_read(user)
+
+
+@api_v1.post("/auth/login", response_model=UserRead)
+def auth_login(
+    credentials: Credentials,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    user = authenticate(db, credentials)
+    start_session(db, response, user)
+    return user_read(user)
+
+
+@api_v1.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def auth_logout(
+    response: Response,
+    db: Session = Depends(get_db),
+    token: str | None = Cookie(default=None, alias="buffetiser_session"),
+):
+    end_session(db, response, token)
+    response.status_code = status.HTTP_204_NO_CONTENT
+
+
+@api_v1.get("/auth/me", response_model=UserRead)
+def auth_me(user: User = Depends(current_user)):
+    return user_read(user)
+
+
+@api_v1.post("/auth/password", status_code=status.HTTP_204_NO_CONTENT)
+def auth_password(
+    password_in: PasswordChange,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    change_password(db, user, password_in)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@api_v1.get("/users", response_model=list[UserRead])
+def get_users(
+    db: Session = Depends(get_db),
+    _admin: User = Depends(current_admin),
+):
+    return list_users(db)
+
+
+@api_v1.post(
+    "/users",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def post_user(
+    user_in: UserCreate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(current_admin),
+):
+    return user_read(create_user(db, user_in))
+
+
 @api_v1.get("/all", response_model=AllInvestmentsRead)
 def all_investments(
     include_history: bool = True,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
 ):
     """
     Return the investment summaries and price history required by the dashboard.
     """
     _logger.info("All investments endpoint hit")
-    return get_all_investments(db, include_history=include_history)
+    return get_all_investments(
+        db,
+        user.id,
+        include_history=include_history,
+    )
 
 
 @api_v1.get(
@@ -133,9 +231,10 @@ def all_investments(
 def investment_history(
     investment_key: str,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
 ):
     try:
-        return get_investment_history(db, investment_key)
+        return get_investment_history(db, investment_key, user.id)
     except InvestmentDeleteNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -150,10 +249,11 @@ def investment_history(
 def remove_investment(
     investment_key: str,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
     _guard=Depends(database_write_dependency),
 ):
     try:
-        archive_investment(db, investment_key)
+        archive_investment(db, investment_key, user.id)
     except InvestmentDeleteNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -164,12 +264,15 @@ def remove_investment(
 
 
 @api_v1.get("/reports/")
-def investment_reports(db: Session = Depends(get_db)):
-    return get_investment_reports(db)
+def investment_reports(
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    return get_investment_reports(db, user.id)
 
 
 @api_v1.get("/constants")
-def constants():
+def constants(_user: User = Depends(current_user)):
     _logger.info("Constants endpoint hit")
     return {"constants": get_constants()}
 
@@ -181,6 +284,7 @@ def _remove_backup(path: Path) -> None:
 @api_v1.post("/backup_db/")
 def backup_database(
     background_tasks: BackgroundTasks,
+    _admin: User = Depends(current_admin),
     _guard=Depends(database_write_dependency),
 ):
     try:
@@ -203,6 +307,7 @@ def backup_database(
 @api_v1.post("/restore_db/")
 def restore_database(
     backup: UploadFile,
+    _admin: User = Depends(current_admin),
     _guard=Depends(database_write_dependency),
 ):
     suffix = Path(backup.filename or "backup.dump").suffix or ".dump"
@@ -239,10 +344,11 @@ def restore_database(
 def post_purchase(
     purchase_in: PurchaseCreate,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
     _guard=Depends(database_write_dependency),
 ):
     try:
-        purchase = create_purchase(db, purchase_in)
+        purchase = create_purchase(db, purchase_in, user.id)
         investment = purchase.investment or db.get(Investment, purchase.investment_key)
         if investment is not None and not investment.history:
             try:
@@ -269,20 +375,27 @@ def post_purchase(
 @api_v1.post("/update_all/")
 def update_prices(
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
     _guard=Depends(database_write_dependency),
 ):
     """Update active investments with their latest Yahoo daily prices."""
-    return update_all_prices(db)
+    return update_all_prices(db, owner_id=user.id)
 
 
 @api_v1.get("/portfolio", response_model=PortfolioRead)
-def portfolio(db: Session = Depends(get_db)):
+def portfolio(
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
     """Return one year of daily portfolio totals and realised sale profits."""
-    return get_portfolio(db)
+    return get_portfolio(db, user.id)
 
 
 @api_v1.get("/cron_time/")
-def get_cron_time(db: Session = Depends(get_db)):
+def get_cron_time(
+    db: Session = Depends(get_db),
+    _admin: User = Depends(current_admin),
+):
     configuration = get_configuration(db)
     return {
         "cron_time": configuration.update_time,
@@ -294,6 +407,7 @@ def get_cron_time(db: Session = Depends(get_db)):
 def set_cron_time(
     update_time: str = Body(...),
     db: Session = Depends(get_db),
+    _admin: User = Depends(current_admin),
     _guard=Depends(database_write_dependency),
 ):
     try:
@@ -320,10 +434,11 @@ def set_cron_time(
 def post_sale(
     sale_in: SaleCreate,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
     _guard=Depends(database_write_dependency),
 ):
     try:
-        return create_sale(db, sale_in)
+        return create_sale(db, sale_in, user.id)
     except SaleInvestmentNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -349,10 +464,11 @@ def post_sale(
 def post_dividend(
     payment_in: DividendPaymentCreate,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
     _guard=Depends(database_write_dependency),
 ):
     try:
-        return create_dividend_payment(db, payment_in)
+        return create_dividend_payment(db, payment_in, user.id)
     except DividendInvestmentNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -378,10 +494,11 @@ def post_dividend(
 def post_reinvestment(
     reinvestment_in: DividendReinvestmentCreate,
     db: Session = Depends(get_db),
+    user: User = Depends(current_user),
     _guard=Depends(database_write_dependency),
 ):
     try:
-        return create_dividend_reinvestment(db, reinvestment_in)
+        return create_dividend_reinvestment(db, reinvestment_in, user.id)
     except DividendInvestmentNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

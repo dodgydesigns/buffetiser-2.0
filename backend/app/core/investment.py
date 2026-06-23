@@ -52,6 +52,7 @@ def _daily_changes_by_symbol(db: Session) -> dict[str, DailyChange]:
 
 def get_all_investments(
     db: Session,
+    owner_id: int,
     *,
     include_history: bool = True,
 ) -> AllInvestmentsRead:
@@ -65,7 +66,10 @@ def get_all_investments(
 
     statement = (
         select(Investment)
-        .where(col(Investment.visible).is_(True))
+        .where(
+            col(Investment.owner_id) == owner_id,
+            col(Investment.visible).is_(True),
+        )
         .options(*options)
         .order_by(col(Investment.symbol), col(Investment.key))
     )
@@ -110,10 +114,14 @@ def get_all_investments(
 def get_investment_history(
     db: Session,
     investment_key: str,
+    owner_id: int,
 ) -> list[InvestmentHistoryRead]:
     investment = db.scalar(
         select(Investment)
-        .where(col(Investment.key) == investment_key)
+        .where(
+            col(Investment.key) == investment_key,
+            col(Investment.owner_id) == owner_id,
+        )
         .options(selectinload(cast(Any, Investment.history)))
     )
     if investment is None:
@@ -130,8 +138,17 @@ def get_investment_history(
     ]
 
 
-def archive_investment(db: Session, investment_key: str) -> None:
-    investment = db.get(Investment, investment_key)
+def archive_investment(
+    db: Session,
+    investment_key: str,
+    owner_id: int,
+) -> None:
+    investment = db.scalar(
+        select(Investment).where(
+            col(Investment.key) == investment_key,
+            col(Investment.owner_id) == owner_id,
+        )
+    )
     if investment is None:
         raise InvestmentNotFoundError
 

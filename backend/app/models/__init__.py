@@ -5,6 +5,8 @@ from app.models.history import History
 from app.models.investment import Investment
 from app.models.purchase import Purchase
 from app.models.sale import Sale
+from app.models.user import User
+from app.models.user_session import UserSession
 
 __all__ = [
     "Configuration",
@@ -15,4 +17,6 @@ __all__ = [
     "Investment",
     "Purchase",
     "Sale",
+    "User",
+    "UserSession",
 ]

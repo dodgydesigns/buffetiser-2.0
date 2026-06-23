@@ -46,7 +46,12 @@ class PriceHistoryError(Exception):
 
 
 def yahoo_symbol(investment: Investment) -> str:
-    exchange = investment.key.partition("-")[0].upper()
+    exchange = investment.exchange.upper()
+    key_parts = investment.key.upper().split("-")
+    if len(key_parts) >= 2 and key_parts[-2] in _YAHOO_EXCHANGE_SUFFIX:
+        inferred_exchange = key_parts[-2]
+        if exchange == "XASX" and inferred_exchange != "XASX":
+            exchange = inferred_exchange
     symbol = (investment.symbol or "").strip().upper()
     if not symbol:
         raise PriceHistoryError(f"{investment.key} does not have a symbol")
@@ -189,10 +194,16 @@ def update_investment_prices(
     return len(rows)
 
 
-def update_all_prices(db: Session) -> dict[str, Any]:
+def update_all_prices(
+    db: Session,
+    *,
+    owner_id: int | None = None,
+) -> dict[str, Any]:
+    statement = select(Investment).where(Investment.visible.is_(True))
+    if owner_id is not None:
+        statement = statement.where(Investment.owner_id == owner_id)
     investments = db.scalars(
-        select(Investment)
-        .where(Investment.visible.is_(True))
+        statement
         .order_by(col(Investment.key))
     ).all()
     updated: list[str] = []

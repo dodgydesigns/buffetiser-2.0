@@ -39,11 +39,24 @@ export default function SalesProfitDialog({
   const total = sales.at(-1)?.cumulative_profit ?? 0;
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="xl"
+      slotProps={{
+        paper: {
+          sx: {
+            width: "min(92vw, 1400px)",
+            height: "min(88vh, 900px)",
+          },
+        },
+      }}
+    >
       <DialogTitle sx={{ pb: 0.5, fontWeight: 800 }}>
         Realised profit from share sales
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ display: "flex", flexDirection: "column" }}>
         <Typography color="text.secondary" sx={{ mb: 2 }}>
           Net profit after sale fees:{" "}
           <Box
@@ -69,7 +82,7 @@ export default function SalesProfitDialog({
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ width: "100%", height: 390 }}>
+          <Box sx={{ width: "100%", flex: 1, minHeight: 500 }}>
             <ResponsiveContainer>
               <ComposedChart
                 data={sales}
