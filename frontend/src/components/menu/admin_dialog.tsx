@@ -28,6 +28,11 @@ type Feedback = {
   message: string;
 } | null;
 
+type RestoreStatus = {
+  state: "idle" | "running" | "succeeded" | "failed";
+  message?: string;
+};
+
 type SaveFilePickerWindow = Window & {
   showSaveFilePicker?: (options: {
     suggestedName: string;
@@ -225,9 +230,9 @@ export default function AdminDialog({
       }
       setFeedback({
         severity: "success",
-        message: "Database restored successfully. Reloading…",
+        message: "Database restore started. Please keep this window open…",
       });
-      window.setTimeout(() => window.location.reload(), 900);
+      await waitForRestore();
     } catch (error) {
       setFeedback({
         severity: "error",
@@ -235,6 +240,47 @@ export default function AdminDialog({
       });
     } finally {
       setPendingAction(null);
+    }
+  }
+
+  async function waitForRestore() {
+    let shouldPoll = true;
+    while (shouldPoll) {
+      await new Promise((resolve) => window.setTimeout(resolve, 2000));
+
+      const response = await fetch(`${baseURL}/restore_db/status`);
+      if (!response.ok) {
+        setFeedback({
+          severity: "success",
+          message: "Database restore finished. Reloading…",
+        });
+        window.setTimeout(() => window.location.reload(), 900);
+        shouldPoll = false;
+        return;
+      }
+
+      const status = (await response.json()) as RestoreStatus;
+      if (status.state === "running") {
+        setFeedback({
+          severity: "success",
+          message: "Database restore is still running…",
+        });
+        continue;
+      }
+
+      if (status.state === "succeeded") {
+        setFeedback({
+          severity: "success",
+          message: "Database restored successfully. Reloading…",
+        });
+        window.setTimeout(() => window.location.reload(), 900);
+        shouldPoll = false;
+        return;
+      }
+
+      if (status.state === "failed") {
+        throw new Error(status.message || "Restore failed.");
+      }
     }
   }
 

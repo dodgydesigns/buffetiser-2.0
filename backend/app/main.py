@@ -2,7 +2,9 @@ import logging
 import os
 import shutil
 import tempfile
+import threading
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.core.constants import get_constants
@@ -29,6 +31,7 @@ from app.core.database_backup import (
     create_database_backup,
     database_write_dependency,
     restore_database_backup,
+    validate_database_backup,
 )
 from app.core.dividend import (
     AmbiguousInvestmentError,
@@ -95,6 +98,53 @@ from sqlalchemy.orm import Session
 # from app.api.v1.main import api_router
 _logger = logging.getLogger(__name__)
 MAX_BACKUP_UPLOAD_BYTES = 100 * 1024 * 1024
+_restore_status_lock = threading.Lock()
+_restore_status = {
+    "state": "idle",
+    "message": "No restore has been started.",
+    "started_at": None,
+    "finished_at": None,
+}
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _set_restore_status(
+    state: str,
+    message: str,
+    *,
+    started_at: str | None = None,
+    finished_at: str | None = None,
+) -> None:
+    with _restore_status_lock:
+        if started_at is not None:
+            _restore_status["started_at"] = started_at
+        if finished_at is not None:
+            _restore_status["finished_at"] = finished_at
+        _restore_status["state"] = state
+        _restore_status["message"] = message
+
+
+def _run_restore_job(path: Path) -> None:
+    try:
+        restore_database_backup(path)
+    except Exception as exc:
+        _logger.exception("Database restore failed")
+        _set_restore_status(
+            "failed",
+            str(exc),
+            finished_at=_utc_now_iso(),
+        )
+    else:
+        _set_restore_status(
+            "succeeded",
+            "Database restored successfully.",
+            finished_at=_utc_now_iso(),
+        )
+    finally:
+        shutil.rmtree(path.parent, ignore_errors=True)
 
 
 @asynccontextmanager
@@ -306,34 +356,85 @@ def backup_database(
 
 @api_v1.post("/restore_db/")
 def restore_database(
+    background_tasks: BackgroundTasks,
     backup: UploadFile,
     _admin: User = Depends(current_admin),
-    _guard=Depends(database_write_dependency),
 ):
-    suffix = Path(backup.filename or "backup.dump").suffix or ".dump"
-    with tempfile.TemporaryDirectory(prefix="buffetiser-upload-") as directory:
-        path = Path(directory) / f"uploaded-backup{suffix}"
-        try:
-            with path.open("wb") as destination:
-                total_bytes = 0
-                while chunk := backup.file.read(1024 * 1024):
-                    total_bytes += len(chunk)
-                    if total_bytes > MAX_BACKUP_UPLOAD_BYTES:
-                        raise HTTPException(
-                            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                            detail="Backup files must be 100 MB or smaller",
-                        )
-                    destination.write(chunk)
-            restore_database_backup(path)
-        except DatabaseBackupError as exc:
+    started_at = _utc_now_iso()
+    with _restore_status_lock:
+        if _restore_status["state"] == "running":
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=str(exc),
-            ) from exc
-        finally:
-            backup.file.close()
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A database restore is already running.",
+            )
+        _restore_status["state"] = "running"
+        _restore_status["message"] = "Database backup is being uploaded."
+        _restore_status["started_at"] = started_at
+        _restore_status["finished_at"] = ""
 
-    return {"message": "Database restored successfully"}
+    suffix = Path(backup.filename or "backup.dump").suffix or ".dump"
+    directory = Path(tempfile.mkdtemp(prefix="buffetiser-upload-"))
+    path = directory / f"uploaded-backup{suffix}"
+    try:
+        with path.open("wb") as destination:
+            total_bytes = 0
+            while chunk := backup.file.read(1024 * 1024):
+                total_bytes += len(chunk)
+                if total_bytes > MAX_BACKUP_UPLOAD_BYTES:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                        detail="Backup files must be 100 MB or smaller",
+                    )
+                destination.write(chunk)
+
+        validate_database_backup(path)
+    except HTTPException as exc:
+        shutil.rmtree(directory, ignore_errors=True)
+        _set_restore_status(
+            "failed",
+            str(exc.detail),
+            finished_at=_utc_now_iso(),
+        )
+        raise
+    except DatabaseBackupError as exc:
+        shutil.rmtree(directory, ignore_errors=True)
+        _set_restore_status(
+            "failed",
+            str(exc),
+            finished_at=_utc_now_iso(),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
+    except Exception:
+        shutil.rmtree(directory, ignore_errors=True)
+        _set_restore_status(
+            "failed",
+            "Restore failed while reading the uploaded backup.",
+            finished_at=_utc_now_iso(),
+        )
+        raise
+    finally:
+        backup.file.close()
+
+    _set_restore_status(
+        "running",
+        "Database restore is running.",
+    )
+    background_tasks.add_task(_run_restore_job, path)
+
+    return {
+        "message": "Database restore started.",
+        "state": "running",
+        "started_at": started_at,
+    }
+
+
+@api_v1.get("/restore_db/status")
+def restore_database_status(_admin: User = Depends(current_admin)):
+    with _restore_status_lock:
+        return dict(_restore_status)
 
 
 @api_v1.post(

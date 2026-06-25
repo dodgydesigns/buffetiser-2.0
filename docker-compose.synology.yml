@@ -45,7 +45,7 @@ services:
     container_name: buffetiser_frontend
     restart: unless-stopped
     ports:
-      - "${BUFFETISER_PORT:-8080}:80"
+      - "${BUFFETISER_PORT:-8080}:8080"
     depends_on:
       backend:
         condition: service_started

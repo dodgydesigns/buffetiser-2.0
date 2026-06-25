@@ -25,7 +25,7 @@ def test_restore_rejects_invalid_archive(client, monkeypatch):
 
         raise DatabaseBackupError("Invalid PostgreSQL archive")
 
-    monkeypatch.setattr(main_module, "restore_database_backup", reject_backup)
+    monkeypatch.setattr(main_module, "validate_database_backup", reject_backup)
     response = client.post(
         "/api/v1/restore_db/",
         files={
@@ -39,3 +39,26 @@ def test_restore_rejects_invalid_archive(client, monkeypatch):
 
     assert response.status_code == 422
     assert response.json()["detail"] == "Invalid PostgreSQL archive"
+
+
+def test_restore_starts_background_job(client, monkeypatch):
+    monkeypatch.setattr(main_module, "validate_database_backup", lambda _: None)
+    monkeypatch.setattr(main_module, "restore_database_backup", lambda _: None)
+
+    response = client.post(
+        "/api/v1/restore_db/",
+        files={
+            "backup": (
+                "valid.dump",
+                b"dump",
+                "application/octet-stream",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "running"
+
+    status_response = client.get("/api/v1/restore_db/status")
+    assert status_response.status_code == 200
+    assert status_response.json()["state"] == "succeeded"
