@@ -1,8 +1,12 @@
+import os
+
 import pytest
 from app.core.auth import current_admin, current_user
 from app.main import app
 from app.models.user import User
 from fastapi.testclient import TestClient
+
+os.environ["BUFFETISER_SKIP_STARTUP_SCHEMA_CHECK"] = "true"
 
 
 @pytest.fixture(autouse=True)

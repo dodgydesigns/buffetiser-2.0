@@ -252,11 +252,9 @@ export default function AdminDialog({
       if (!response.ok) {
         setFeedback({
           severity: "success",
-          message: "Database restore finished. Reloading…",
+          message: "Waiting for the database restore to finish…",
         });
-        window.setTimeout(() => window.location.reload(), 900);
-        shouldPoll = false;
-        return;
+        continue;
       }
 
       const status = (await response.json()) as RestoreStatus;

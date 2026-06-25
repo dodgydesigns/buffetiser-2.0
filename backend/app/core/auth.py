@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.user_session import UserSession
 from fastapi import Cookie, Depends, HTTPException, Response, status
 from pwdlib import PasswordHash
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlmodel import Field, SQLModel, col, select
 
@@ -64,9 +65,19 @@ def _user_read(user: User) -> UserRead:
 
 
 def setup_required(db: Session) -> bool:
-    return db.scalar(
-        select(User).where(col(User.is_bootstrap).is_(True))
-    ) is not None
+    return (
+        db.scalar(
+            text(
+                """
+                SELECT 1
+                FROM "user"
+                WHERE is_bootstrap IS TRUE
+                LIMIT 1
+                """
+            )
+        )
+        is not None
+    )
 
 
 def complete_setup(db: Session, user_in: UserCreate) -> User:

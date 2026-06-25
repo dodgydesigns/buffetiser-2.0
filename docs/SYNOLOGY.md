@@ -70,3 +70,39 @@ Rebuild the project after changing these values.
 Replace or pull the source files, then choose **Project → Action → Build** in
 Container Manager. The PostgreSQL data remains in the named
 `buffetiser_db_data` volume.
+
+## Rebuild and recovery
+
+After your Synology installation is working, create a fresh backup from
+**Config → Administrator → Back up**. Keep that `.dump` file somewhere outside
+`/volume1/docker/buffetiser`, with another copy on separate storage if
+possible.
+
+You can safely rebuild containers and images because the portfolio lives in the
+named Docker volume `buffetiser_db_data`:
+
+```bash
+cd /volume1/docker/buffetiser
+sudo docker compose -f docker-compose.synology.yml up -d --build
+```
+
+Stopping containers keeps the data:
+
+```bash
+sudo docker compose -f docker-compose.synology.yml down
+```
+
+Do not use `down -v` unless you intentionally want to delete the database:
+
+```bash
+sudo docker compose -f docker-compose.synology.yml down -v
+```
+
+To recover after a complete wipe:
+
+1. Copy the Buffetiser project back to `/volume1/docker/buffetiser`.
+2. Recreate `.env` from `.env.example`.
+3. Set `BUFFETISER_PORT`, `POSTGRES_PASSWORD` and `ALLOWED_ORIGINS`.
+4. Start the project with `docker-compose.synology.yml`.
+5. Create the first administrator account.
+6. Restore your latest `.dump` backup through **Config → Administrator**.

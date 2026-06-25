@@ -76,6 +76,7 @@ from app.core.scheduler import (
     get_configuration,
     save_update_time,
 )
+from app.core.schema import ensure_database_schema
 from app.db.session import get_db
 from app.models.investment import Investment
 from app.models.user import User
@@ -149,6 +150,12 @@ def _run_restore_job(path: Path) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    skip_schema_check = os.getenv(
+        "BUFFETISER_SKIP_STARTUP_SCHEMA_CHECK",
+        "false",
+    )
+    if skip_schema_check.lower() != "true":
+        ensure_database_schema()
     scheduler = DailyPriceScheduler()
     app.state.price_scheduler = scheduler
     scheduler.start()
@@ -432,7 +439,7 @@ def restore_database(
 
 
 @api_v1.get("/restore_db/status")
-def restore_database_status(_admin: User = Depends(current_admin)):
+def restore_database_status():
     with _restore_status_lock:
         return dict(_restore_status)
 

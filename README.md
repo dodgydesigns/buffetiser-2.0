@@ -203,6 +203,41 @@ The short version:
 See [the complete Synology guide](docs/SYNOLOGY.md) for HTTPS, reverse proxy,
 updates and migration instructions.
 
+### Synology rebuild and disaster recovery
+
+Once Buffetiser is working on Synology, create a fresh backup from
+**Config → Administrator → Back up** and store it outside
+`/volume1/docker/buffetiser`. That backup is the easiest way to recover your
+portfolio if the NAS project or database volume is ever removed.
+
+The Synology Compose file is enough to recreate the application as long as the
+project files are present:
+
+```bash
+cd /volume1/docker/buffetiser
+sudo docker compose -f docker-compose.synology.yml up -d --build
+```
+
+Deleting containers or images is safe; Docker can rebuild them. Deleting the
+database volume removes the portfolio data:
+
+```bash
+# Stops containers but keeps the database volume.
+sudo docker compose -f docker-compose.synology.yml down
+
+# Dangerous: also deletes the PostgreSQL data volume.
+sudo docker compose -f docker-compose.synology.yml down -v
+```
+
+If you deliberately start from nothing:
+
+1. Copy the Buffetiser project back to `/volume1/docker/buffetiser`.
+2. Create `.env` from `.env.example` and set the NAS address in
+   `ALLOWED_ORIGINS`, for example `http://192.168.1.50:8080`.
+3. Start the project with `docker-compose.synology.yml`.
+4. Create the administrator account.
+5. Restore your latest `.dump` backup through **Config → Administrator**.
+
 ## Security
 
 - Passwords are hashed with Argon2.

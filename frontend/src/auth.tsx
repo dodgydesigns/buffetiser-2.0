@@ -35,17 +35,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [setupRequired, setSetupRequired] = useState(false);
+  const [startupError, setStartupError] = useState("");
 
   useEffect(() => {
     async function loadSession() {
       try {
         const response = await axios.get<AuthUser>("/api/v1/auth/me");
         setUser(response.data);
-      } catch {
-        const response = await axios.get<{ setup_required: boolean }>(
-          "/api/v1/auth/status"
-        );
-        setSetupRequired(response.data.setup_required);
+      } catch (sessionError) {
+        if (
+          axios.isAxiosError(sessionError) &&
+          sessionError.response?.status !== 401
+        ) {
+          setStartupError(
+            "Buffetiser could not reach the server. Please check the backend container logs."
+          );
+          return;
+        }
+
+        try {
+          const response = await axios.get<{ setup_required: boolean }>(
+            "/api/v1/auth/status"
+          );
+          setSetupRequired(response.data.setup_required);
+        } catch {
+          setStartupError(
+            "Buffetiser could not reach the server. Please check the backend container logs."
+          );
+        }
       } finally {
         setLoading(false);
       }
@@ -66,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (!user) {
     return (
       <LoginScreen
+        startupError={startupError}
         setupRequired={setupRequired}
         onAuthenticated={setUser}
       />
@@ -80,9 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 function LoginScreen({
+  startupError,
   setupRequired,
   onAuthenticated,
 }: {
+  startupError: string;
   setupRequired: boolean;
   onAuthenticated: (user: AuthUser) => void;
 }) {
@@ -94,10 +114,15 @@ function LoginScreen({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (startupError) {
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
-      const endpoint = setupRequired ? "/api/v1/auth/setup" : "/api/v1/auth/login";
+      const endpoint = setupRequired
+        ? "/api/v1/auth/setup"
+        : "/api/v1/auth/login";
       const response = await axios.post<AuthUser>(endpoint, {
         username,
         password,
@@ -108,7 +133,7 @@ function LoginScreen({
       if (axios.isAxiosError(requestError)) {
         setError(
           requestError.response?.data?.detail ??
-            "Unable to sign in. Please try again."
+            "Buffetiser could not reach the server. Please check the backend container logs."
         );
       } else {
         setError("Unable to sign in. Please try again.");
@@ -161,7 +186,8 @@ function LoginScreen({
           />
         </label>
         {error && <div className="auth-error">{error}</div>}
-        <button type="submit" disabled={submitting}>
+        {startupError && <div className="auth-error">{startupError}</div>}
+        <button type="submit" disabled={submitting || Boolean(startupError)}>
           {submitting
             ? "Please wait…"
             : setupRequired
