@@ -21,9 +21,6 @@ type CustomTooltipProps = {
   payload?: TooltipPayload[];
 };
 
-const formatTooltipValue = (value: TooltipPayload["value"]) =>
-  typeof value === "number" ? value.toFixed(23) : value;
-
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
@@ -31,11 +28,11 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
         <ul style={{ listStyle: "none", padding: 0 }}>
           <li style={{ color: payload[2].color }}>
             <span style={{ display: "inline-block", width: "50px" }}>High:</span>
-            ${formatTooltipValue(payload[2].value)}
+            ${payload[2].value.toFixed(2)}
           </li>
           <li style={{ color: payload[1].color }}>
             <span style={{ display: "inline-block", width: "50px" }}>Low:</span>
-            ${formatTooltipValue(payload[1].value)}
+            ${payload[1].value.toFixed(2)}
           </li>
         </ul>
       </div>

@@ -70,9 +70,13 @@ const InvestmentTransactions = () => {
       transaction.units !== undefined &&
       transaction.price_per_unit !== undefined
     ) {
+      const gross = transaction.units * transaction.price_per_unit;
+      const fee = transaction.fee ?? 0;
+      if (transaction.type === "sale") {
+        return gross - fee;
+      }
       return (
-        transaction.units * transaction.price_per_unit +
-        (transaction.fee ?? 0)
+        gross + fee
       );
     }
     return transaction.value;
